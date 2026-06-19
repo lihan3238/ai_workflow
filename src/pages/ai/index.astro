@@ -1,0 +1,73 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import registry from "../../../ai/registry/assets.json";
+import {
+  assetsVisibleInSiteMode,
+  isOperatorMode,
+  parseSiteMode,
+  shouldShowHiddenAssetCount
+} from "../../lib/site-mode";
+
+const assets = registry.assets;
+const siteMode = parseSiteMode(import.meta.env.PUBLIC_SITE_MODE);
+const visibleAssets = assetsVisibleInSiteMode(siteMode, assets);
+const hiddenAssets = assets.length - visibleAssets.length;
+const groups = ["card", "prompt", "skill", "profile", "connector"];
+---
+
+<BaseLayout title="AI Assets" section="ai">
+  <p class="eyebrow">Registry</p>
+  <h1 class="page-title">AI 资产不是聊天记录，是可验证、可迁移的运行时材料。</h1>
+  <p class="lead">
+    Registry 从 `ai/` 源文件生成。Agent 先看 metadata 决定是否加载正文，再按 verify trio
+    判断是否应用。网页会按构建模式过滤资产；程序员在本地 runtime 中使用完整 registry。
+  </p>
+
+  {!isOperatorMode(siteMode) && (
+    <section class="section">
+      <div class="panel">
+        <h2>Private area</h2>
+        <p>当前构建面向家庭只读访问，不展示 operator 资产 registry。程序员请使用私有 operator 构建或本地 Git checkout。</p>
+      </div>
+    </section>
+  )}
+
+  {shouldShowHiddenAssetCount(siteMode) && hiddenAssets > 0 && (
+    <section class="section">
+      <div class="panel">
+        <h2>Assets hidden</h2>
+        <p>{hiddenAssets} asset{hiddenAssets === 1 ? "" : "s"} are outside this build mode and available only through the intended runtime or private site.</p>
+      </div>
+    </section>
+  )}
+
+  {groups.map((kind) => {
+    const group = visibleAssets.filter((asset) => asset.kind === kind);
+    if (group.length === 0) return null;
+    return (
+      <section class="section">
+        <div class="section-header">
+          <h2>{kind}</h2>
+          <p>{group.length} asset{group.length === 1 ? "" : "s"}</p>
+        </div>
+        <div class="grid cols-3">
+          {group.map((asset) => (
+            <article class="asset-card">
+              <div class="asset-meta">
+                <span class={`pill ${asset.kind}`}>{asset.kind}</span>
+                <span class="tag">{asset.domain}</span>
+                <span class="tag">{asset.visibility}</span>
+              </div>
+              <h3>{asset.title}</h3>
+              <p>{asset.summary_zh ?? asset.summary}</p>
+              <div class="tag-row">
+                {asset.tags.map((tag) => <span class="tag">{tag}</span>)}
+              </div>
+              <div class="asset-path">{asset.path}</div>
+            </article>
+          ))}
+        </div>
+      </section>
+    );
+  })}
+</BaseLayout>

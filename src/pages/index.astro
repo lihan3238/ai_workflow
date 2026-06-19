@@ -1,0 +1,64 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import registry from "../../ai/registry/assets.json";
+import { assetsVisibleInSiteMode, parseSiteMode } from "../lib/site-mode";
+import { getCollection } from "astro:content";
+import { loadRuntimeState } from "../lib/runtime/load";
+
+const posts = (await getCollection("posts")).sort(
+  (a, b) => b.data.date.valueOf() - a.data.date.valueOf()
+);
+const siteMode = parseSiteMode(import.meta.env.PUBLIC_SITE_MODE);
+const visibleAssets = assetsVisibleInSiteMode(siteMode, registry.assets);
+const runtime = await loadRuntimeState();
+const drift = runtime.summary.missing + runtime.summary.changed + runtime.summary.extra;
+---
+
+<BaseLayout title="AI Workflow Home" section="home">
+  <p class="eyebrow">Personal AI runtime</p>
+  <h1 class="page-title">一个用 GitHub 管理 AI 资产、用 Runtime 对齐多设备的工作台。</h1>
+  <p class="lead">
+    博客只是窗口。核心是 Git 管理的 cards、prompts、skills、profiles、AGENTS/CLAUDE
+    指南和设备快照。每台设备差多少、多多少、缺什么，都在 Runtime 里看。
+  </p>
+
+  <section class="section">
+    <div class="grid cols-4">
+      <div class="panel metric">
+        <span>AI assets</span>
+        <strong>{visibleAssets.length}</strong>
+      </div>
+      <div class="panel metric">
+        <span>Devices</span>
+        <strong>{runtime.summary.online}/{runtime.summary.devices}</strong>
+      </div>
+      <div class="panel metric">
+        <span>Drift</span>
+        <strong>{drift}</strong>
+      </div>
+      <div class="panel metric">
+        <span>Blog posts</span>
+        <strong>{posts.length}</strong>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-header">
+      <h2>Operator paths</h2>
+      <p>专业操作都保留 CLI：网页负责观察与确认，写入和上传仍由 Git/CLI 控制。</p>
+    </div>
+    <div class="grid cols-2">
+      <a class="panel" href="/runtime">
+        <h3>Device sync</h3>
+        <p>查看每台设备的用户级 AGENTS.md、CLAUDE.md、skills、项目列表和资产差异。</p>
+        <code class="command">npm run runtime:diff -- --device runtime/devices/father-linux.json</code>
+      </a>
+      <a class="panel" href="/ai/">
+        <h3>Asset registry</h3>
+        <p>查看当前 GitHub/repo 基准中的 AI assets。项目列表不再作为 asset kind 存在。</p>
+        <code class="command">npm run validate && npm run build:registry</code>
+      </a>
+    </div>
+  </section>
+</BaseLayout>

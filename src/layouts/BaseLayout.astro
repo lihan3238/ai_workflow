@@ -1,0 +1,57 @@
+---
+import "../styles/global.css";
+import { NAV_ITEMS, navItemsForSiteMode, parseSiteMode } from "../lib/site-mode";
+
+interface Props {
+  title: string;
+  description?: string;
+  section?: string;
+}
+
+const {
+  title,
+  description = "AI Workflow Home",
+  section = "home"
+} = Astro.props;
+
+const siteMode = parseSiteMode(import.meta.env.PUBLIC_SITE_MODE);
+const nav = navItemsForSiteMode(siteMode, NAV_ITEMS);
+---
+
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="description" content={description} />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>{title}</title>
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar" aria-label="Primary">
+        <a class="brand" href="/">
+          <span class="brand-mark">AH</span>
+          <span>
+            <strong>AI Workflow Home</strong>
+            <small>runtime lab</small>
+          </span>
+        </a>
+        <nav class="nav-list">
+          {nav.map((item) => (
+            <a class:list={["nav-link", section === item.key && "is-active"]} href={item.href}>
+              {item.label}
+            </a>
+          ))}
+        </nav>
+        <div class="sidebar-note">
+          <span class="status-dot"></span>
+          Linux server first, NAS later.
+        </div>
+      </aside>
+      <main class="main">
+        <slot />
+      </main>
+    </div>
+  </body>
+</html>

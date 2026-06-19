@@ -1,0 +1,355 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import { loadRuntimeState } from "../lib/runtime/load";
+import {
+  runtimeDeviceHref,
+  runtimeDeviceIdentityLine,
+  runtimeDeviceInventoryLine,
+  runtimeDeviceStatusLine,
+  type RuntimeToolSnapshot
+} from "../lib/runtime/inventory";
+
+const runtime = await loadRuntimeState();
+const drift = runtime.summary.missing + runtime.summary.changed + runtime.summary.extra;
+const scanInterval = runtime.scanConfig.poll_interval_seconds;
+
+function toolClass(tool: RuntimeToolSnapshot | undefined): string {
+  return tool?.installed ? "installed" : "missing";
+}
+
+function toolText(label: string, tool: RuntimeToolSnapshot | undefined): string {
+  return `${label} ${tool?.installed ? "installed" : "missing"}`;
+}
+---
+
+<BaseLayout title="Runtime" section="runtime">
+  <p class="eyebrow">Runtime inventory</p>
+  <h1 class="page-title">Runtime 显示每台设备和 GitHub 资产基准之间的差异。</h1>
+  <p class="lead">
+    GitHub 仓库里的 `ai/`、`runtime/adapters/` 是最新基准。每台设备通过 SSH 定期扫描；
+    页面负责登记主机、展示状态和资产差异。真正写回设备或 GitHub 仍走 CLI 与 Git。
+  </p>
+
+  <section class="section">
+    <div class="grid cols-5">
+      <div class="panel metric">
+        <span>Devices</span>
+        <strong>{runtime.summary.online}/{runtime.summary.devices}</strong>
+      </div>
+      <div class="panel metric">
+        <span>Missing</span>
+        <strong>{runtime.summary.missing}</strong>
+      </div>
+      <div class="panel metric">
+        <span>Changed</span>
+        <strong>{runtime.summary.changed}</strong>
+      </div>
+      <div class="panel metric">
+        <span>Extra</span>
+        <strong>{runtime.summary.extra}</strong>
+      </div>
+      <div class="panel metric">
+        <span>Scan</span>
+        <strong>{scanInterval}s</strong>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-header">
+      <h2>GitHub / repo</h2>
+      <p>网页展示当前构建时看到的 Git remote、分支、工作树状态和资产基准时间。</p>
+    </div>
+    <div class="grid cols-4">
+      <div class="panel">
+        <h3>GitHub 地址</h3>
+        <p><a href={runtime.repository.web_url}>{runtime.repository.web_url}</a></p>
+      </div>
+      <div class="panel">
+        <h3>Remote</h3>
+        <code class="command">{runtime.repository.remote_url}</code>
+      </div>
+      <div class="panel">
+        <h3>Branch / HEAD</h3>
+        <p>{runtime.repository.status_line}</p>
+        <p>{runtime.repository.head}</p>
+      </div>
+      <div class="panel">
+        <h3>Baseline</h3>
+        <p>{runtime.baseline.generated_at}</p>
+        <p>{runtime.repository.dirty_files} working tree entries</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-header">
+      <h2>接入设备</h2>
+      <p>输入 `user@ip:port` 并确认后写入扫描配置。免密 SSH、known_hosts 和密钥轮换继续交给系统 SSH。</p>
+    </div>
+    <div class="onboarding-grid">
+      <form class="panel onboarding-panel" id="device-onboard-form">
+        <label class="search-label" for="ssh-target">SSH target</label>
+        <input
+          class="search-input"
+          id="ssh-target"
+          name="ssh-target"
+          value="rocky@10.81.2.18:22"
+          autocomplete="off"
+        />
+        <label class="search-label" for="device-label">Label</label>
+        <input
+          class="search-input"
+          id="device-label"
+          name="device-label"
+          value="Father Linux workstation"
+          autocomplete="off"
+        />
+        <label class="search-label" for="remote-root">Remote repo root</label>
+        <input
+          class="search-input"
+          id="remote-root"
+          name="remote-root"
+          value="/home/rocky/work/ai_workflow"
+          autocomplete="off"
+        />
+        <button class="button primary" id="device-add-button" type="submit">直接添加主机</button>
+        <p class="form-status" id="device-onboard-status">需要先配置免密 SSH；operator 服务可写入配置，静态站只读。</p>
+      </form>
+      <div class="panel">
+        <h3>三分钟扫描</h3>
+        <p>添加主机后，在展示服务器保持扫描进程运行；长期部署交给 systemd timer 或 cron。</p>
+        <code class="command">npm run runtime:scan -- --watch --interval-seconds 180</code>
+      </div>
+    </div>
+    <div class="grid cols-3 registered-devices">
+      {runtime.scanConfig.devices.length === 0 ? (
+        <div class="panel">
+          <h3>尚未注册扫描设备</h3>
+          <p>先生成 `runtime/devices/config.json`，再运行 `npm run runtime:scan`。</p>
+        </div>
+      ) : (
+        runtime.scanConfig.devices.map((device) => (
+          <div class="panel">
+            <h3>{device.label}</h3>
+            <p>{device.ssh.target}:{device.ssh.port}</p>
+            <p>{device.remote_root || "未配置 remote_root，先采集用户指南"}</p>
+            <button class="button danger device-delete-button" type="button" data-device-id={device.id}>
+              删除主机
+            </button>
+          </div>
+        ))
+      )}
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-header">
+      <h2>CLI first</h2>
+      <p>所有专业操作都有 CLI 版本。上传本地改动到 GitHub 仍走 Git/gh CLI，不在网页里做。</p>
+    </div>
+    <div class="grid cols-3">
+      <div class="panel">
+        <h3>更新 GitHub 基准</h3>
+        <code class="command">git pull --ff-only && npm run runtime:baseline</code>
+      </div>
+      <div class="panel">
+        <h3>采集 SSH 设备快照</h3>
+        <code class="command">npm run runtime:inspect -- --device my-host --label "My Host" --ssh user@10.81.2.18:22</code>
+      </div>
+      <div class="panel">
+        <h3>查看设备差异</h3>
+        <code class="command">npm run runtime:diff -- --device runtime/devices/father-linux.json</code>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-header">
+      <h2>Devices</h2>
+      <p>{drift === 0 ? "所有设备与基准一致。" : `当前总差异 ${drift} 项。`}</p>
+    </div>
+    <div class="device-list">
+      {runtime.comparisons.map((comparison) => {
+        return (
+          <a class="device-card device-link-card" href={runtimeDeviceHref(comparison.device)}>
+            <div class="device-head">
+              <div>
+                <div class="asset-meta">
+                  <span class:list={["status-chip", comparison.device.online ? "online" : "offline"]}>
+                    {comparison.device.online ? "online" : "offline"}
+                  </span>
+                  <span class="tag">{comparison.device.id}</span>
+                </div>
+                <h3>{comparison.device.label}</h3>
+                <p>{runtimeDeviceIdentityLine(comparison.device)}</p>
+                <p>{runtimeDeviceStatusLine(comparison.device)}</p>
+                <p>{runtimeDeviceInventoryLine(comparison.device)}</p>
+                {comparison.device.inventory_note && <p>{comparison.device.inventory_note}</p>}
+                <div class="tool-strip" aria-label="Runtime tool install status">
+                  <span class:list={["tool-badge", toolClass(comparison.device.tools?.claude)]}>
+                    {toolText("Claude", comparison.device.tools?.claude)}
+                  </span>
+                  <span class:list={["tool-badge", toolClass(comparison.device.tools?.codex)]}>
+                    {toolText("Codex", comparison.device.tools?.codex)}
+                  </span>
+                  <span class:list={["tool-badge", toolClass(comparison.device.tools?.cc_switch)]}>
+                    {toolText("cc-switch", comparison.device.tools?.cc_switch)}
+                  </span>
+                </div>
+              </div>
+              <div class="diff-counts" aria-label="Asset diff counts">
+                <span><strong>{comparison.counts.missing}</strong> missing</span>
+                <span><strong>{comparison.counts.changed}</strong> changed</span>
+                <span><strong>{comparison.counts.extra}</strong> extra</span>
+              </div>
+            </div>
+            <div class="device-open">打开详情</div>
+          </a>
+        );
+      })}
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="panel">
+      <h3>为什么不直接网页上传到 GitHub</h3>
+      <p>
+        下载/同步 GitHub 最新资产到设备是低风险操作，可以由 CLI 明确目标目录后执行。
+        反向上传本地到 GitHub 会改变团队基准，必须走 `git diff`、`git commit`、`gh pr`
+        或等价 CLI 流程，避免非专业用户误点覆盖。
+      </p>
+    </div>
+  </section>
+
+  <dialog class="confirm-dialog" id="runtime-confirm-dialog">
+    <form class="confirm-card" method="dialog">
+      <h3 id="runtime-confirm-title">确认操作</h3>
+      <p id="runtime-confirm-message"></p>
+      <div class="dialog-actions">
+        <button class="button" value="cancel">取消</button>
+        <button class="button primary" value="confirm">确认</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script>
+  const form = document.getElementById("device-onboard-form");
+  const targetInput = document.getElementById("ssh-target");
+  const labelInput = document.getElementById("device-label");
+  const remoteRootInput = document.getElementById("remote-root");
+  const onboardStatus = document.getElementById("device-onboard-status");
+  const confirmDialog = document.getElementById("runtime-confirm-dialog");
+  const confirmTitle = document.getElementById("runtime-confirm-title");
+  const confirmMessage = document.getElementById("runtime-confirm-message");
+  let remoteRootEdited = false;
+
+  function askConfirmation(title, message) {
+    return new Promise((resolve) => {
+      if (!(confirmDialog instanceof HTMLDialogElement)) {
+        resolve(false);
+        return;
+      }
+      if (confirmTitle) confirmTitle.textContent = title;
+      if (confirmMessage) confirmMessage.textContent = message;
+      const handleClose = () => {
+        confirmDialog.removeEventListener("close", handleClose);
+        resolve(confirmDialog.returnValue === "confirm");
+      };
+      confirmDialog.addEventListener("close", handleClose);
+      confirmDialog.showModal();
+    });
+  }
+
+  function slug(value) {
+    return value.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "device";
+  }
+
+  function parseTarget(value) {
+    const at = value.indexOf("@");
+    const colon = value.lastIndexOf(":");
+    if (at <= 0 || colon <= at + 1) return undefined;
+    const user = value.slice(0, at);
+    const host = value.slice(at + 1, colon);
+    const port = value.slice(colon + 1) || "22";
+    return { user, host, port, target: `${user}@${host}` };
+  }
+
+  function defaultRemoteRoot(user) {
+    return user === "root" ? "/root/work/ai_workflow" : `/home/${user}/work/ai_workflow`;
+  }
+
+  function syncRemoteRootDefault() {
+    if (!(targetInput instanceof HTMLInputElement) || !(remoteRootInput instanceof HTMLInputElement)) return;
+    if (remoteRootEdited) return;
+    const parsed = parseTarget(targetInput.value.trim());
+    if (parsed) remoteRootInput.value = defaultRemoteRoot(parsed.user);
+  }
+
+  function quote(value) {
+    return `"${value.replaceAll('"', '\\"')}"`;
+  }
+
+  function renderCommands() {
+    if (!targetInput || !labelInput) return undefined;
+    const parsed = parseTarget(targetInput.value.trim());
+    const label = labelInput.value.trim() || "New device";
+    if (!parsed) {
+      if (onboardStatus) onboardStatus.textContent = "SSH target 格式必须是 user@ip:port。";
+      return undefined;
+    }
+    const id = slug(label);
+    const remoteRoot = remoteRootInput instanceof HTMLInputElement ? remoteRootInput.value.trim() : "";
+    return { id, label, ssh: `${parsed.target}:${parsed.port}`, remote_root: remoteRoot || undefined };
+  }
+
+  remoteRootInput?.addEventListener("input", () => {
+    remoteRootEdited = true;
+  });
+
+  targetInput?.addEventListener("input", syncRemoteRootDefault);
+  syncRemoteRootDefault();
+
+  form?.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const payload = renderCommands();
+    if (!payload || !onboardStatus) return;
+    const confirmed = await askConfirmation("添加主机", `${payload.label} (${payload.ssh})`);
+    if (!confirmed) return;
+    onboardStatus.textContent = "正在写入 runtime/devices/config.json...";
+    try {
+      const response = await fetch("/api/runtime/devices", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+      if (!response.ok) throw new Error(await response.text());
+      onboardStatus.textContent = "已添加主机并重建 operator 页面，正在刷新。";
+      window.location.reload();
+    } catch (error) {
+      const remoteRootArgs = payload.remote_root ? ` --remote-root ${quote(payload.remote_root)}` : "";
+      onboardStatus.textContent = `当前部署是只读静态站或 API 不可用，请执行: npm run runtime:device:add -- --id ${payload.id} --label ${quote(payload.label)} --ssh ${payload.ssh}${remoteRootArgs}`;
+    }
+  });
+
+  for (const button of document.querySelectorAll(".device-delete-button")) {
+    button.addEventListener("click", async () => {
+      const id = button.getAttribute("data-device-id");
+      if (!id) return;
+      const confirmed = await askConfirmation("删除主机", `${id} 的扫描配置和对应快照会被移除。`);
+      if (!confirmed) return;
+      try {
+        const response = await fetch(`/api/runtime/devices/${encodeURIComponent(id)}`, {
+          method: "DELETE"
+        });
+        if (!response.ok) throw new Error(await response.text());
+        window.location.reload();
+      } catch (error) {
+        if (onboardStatus) {
+          onboardStatus.textContent = `当前部署是只读静态站或 API 不可用，请手动编辑 runtime/devices/config.json。${error instanceof Error ? ` ${error.message}` : ""}`;
+        }
+      }
+    });
+  }
+  </script>
+</BaseLayout>

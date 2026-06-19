@@ -1,0 +1,252 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import {
+  runtimeDeviceIdentityLine,
+  runtimeDeviceInventoryLine,
+  runtimeDeviceStatusLine,
+  runtimeGuideVerificationLine,
+  type RuntimeToolSnapshot
+} from "../../lib/runtime/inventory";
+import { diffTextForComparison, loadRuntimeState } from "../../lib/runtime/load";
+
+export async function getStaticPaths() {
+  const runtime = await loadRuntimeState();
+  return runtime.comparisons.map((comparison) => ({
+    params: { id: comparison.device.id },
+    props: { comparison }
+  }));
+}
+
+const { comparison } = Astro.props;
+const diffText = diffTextForComparison(comparison);
+const diffCommand = `npm run runtime:diff -- --device runtime/devices/${comparison.device.id}.json`;
+const syncCommand = `npm run runtime:sync -- --device runtime/devices/${comparison.device.id}.json --target-root <device-repo-root> --apply`;
+const agentsGuide = comparison.device.agent_guides.agents_md;
+const claudeGuide = comparison.device.agent_guides.claude_md;
+const guideVerification = comparison.device.guide_verification;
+const runtimeTools = [
+  ["Claude Code", comparison.device.tools?.claude],
+  ["Codex", comparison.device.tools?.codex],
+  ["cc-switch", comparison.device.tools?.cc_switch]
+] as Array<[string, RuntimeToolSnapshot | undefined]>;
+
+function pathList(paths: string[] | undefined): string {
+  return paths && paths.length > 0 ? paths.join(", ") : "未发现";
+}
+---
+
+<BaseLayout title={comparison.device.label} section="runtime">
+  <p class="eyebrow">Device detail</p>
+  <h1 class="page-title">{comparison.device.label}</h1>
+  <p class="lead">
+    {runtimeDeviceIdentityLine(comparison.device)}。{runtimeDeviceStatusLine(comparison.device)}。
+    这里显示这台设备的用户级指南、skills、
+    项目状态和 GitHub/repo 基准差异；写入仍回到目标设备终端执行 CLI。
+  </p>
+  <p class="lead">{runtimeDeviceInventoryLine(comparison.device)}</p>
+  {comparison.device.inventory_note && <p class="lead">{comparison.device.inventory_note}</p>}
+
+  <section class="section">
+    <div class="device-actions">
+      <a class="button inline-button" href="/runtime/">返回 Devices</a>
+      <button class="button danger" id="device-delete-button" type="button" data-device-id={comparison.device.id}>
+        删除主机
+      </button>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="grid cols-4">
+      <div class="panel metric">
+        <span>Missing</span>
+        <strong>{comparison.counts.missing}</strong>
+      </div>
+      <div class="panel metric">
+        <span>Changed</span>
+        <strong>{comparison.counts.changed}</strong>
+      </div>
+      <div class="panel metric">
+        <span>Extra</span>
+        <strong>{comparison.counts.extra}</strong>
+      </div>
+      <div class="panel metric">
+        <span>In sync</span>
+        <strong>{comparison.counts.in_sync}</strong>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="guide-layout">
+      <div class="panel">
+        <h3>AGENTS.md canonical content</h3>
+        <p>{agentsGuide.path}</p>
+        {agentsGuide.resolved_path && <p>{agentsGuide.resolved_path}</p>}
+        <pre class="guide-content">{agentsGuide.content || "尚未采集 AGENTS.md 全文"}</pre>
+      </div>
+      <div class="panel">
+        <h3>CLAUDE.md verification</h3>
+        <div class="asset-meta">
+          <span class:list={["status-chip", guideVerification?.status === "verified" ? "online" : "offline"]}>
+            {guideVerification?.status || "unknown"}
+          </span>
+          <span class="tag">{guideVerification?.mode || "unknown"}</span>
+        </div>
+        <p>{runtimeGuideVerificationLine(guideVerification)}</p>
+        <ul class="compact-list">
+          <li>CLAUDE.md status: {claudeGuide.status}</li>
+          <li>CLAUDE.md path: {claudeGuide.path}</li>
+          {claudeGuide.resolved_path && <li>resolved: {claudeGuide.resolved_path}</li>}
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-header">
+      <h2>Toolchain</h2>
+      <p>通过 SSH 采集命令路径、版本和配置文件位置；不读取 provider secret 或配置正文。</p>
+    </div>
+    <div class="tool-grid">
+      {runtimeTools.map(([label, tool]) => (
+        <div class="panel tool-panel">
+          <div class="asset-meta">
+            <span class:list={["tool-badge", tool?.installed ? "installed" : "missing"]}>
+              {tool?.installed ? "installed" : "missing"}
+            </span>
+            {tool?.managed_by_cc_switch !== undefined && (
+              <span class:list={["tool-badge", tool.managed_by_cc_switch ? "installed" : "neutral"]}>
+                {tool.managed_by_cc_switch ? "cc-switch managed" : "not managed"}
+              </span>
+            )}
+          </div>
+          <h3>{label}</h3>
+          <ul class="compact-list tool-detail-list">
+            <li>version: {tool?.version || "unknown"}</li>
+            <li>binary: {tool?.binary_path || "未发现"}</li>
+            <li>config: {pathList(tool?.config_paths)}</li>
+            {tool?.data_paths && <li>data: {pathList(tool.data_paths)}</li>}
+            {tool?.db_user_version !== undefined && <li>cc-switch DB user_version: {tool.db_user_version}</li>}
+          </ul>
+        </div>
+      ))}
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="runtime-columns">
+      <div class="panel">
+        <h3>Skills</h3>
+        <ul class="compact-list">
+          {comparison.device.skills.map((skill) => (
+            <li>{skill.tool}:{skill.name} - {skill.status}</li>
+          ))}
+        </ul>
+      </div>
+      <div class="panel">
+        <h3>Projects</h3>
+        <ul class="compact-list">
+          {comparison.device.projects.length === 0 ? (
+            <li>尚未采集远端项目清单</li>
+          ) : (
+            comparison.device.projects.map((project) => (
+              <li>
+                <strong>{project.name}</strong> - {project.status}
+                {project.branch && ` - ${project.branch}`}
+                <br />
+                {project.path}
+                {project.remote_url && (
+                  <>
+                    <br />
+                    {project.remote_url}
+                  </>
+                )}
+                {project.markers && project.markers.length > 0 && (
+                  <>
+                    <br />
+                    markers: {project.markers.join(", ")}
+                  </>
+                )}
+              </li>
+            ))
+          )}
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-header">
+      <h2>Diff</h2>
+      <p>网页对 private prompt/profile 路径做 redaction；完整路径和内容请用 CLI diff。</p>
+    </div>
+    <div class="diff-panel open-panel">
+      <pre>{diffText || "No asset drift."}</pre>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="grid cols-2">
+      <div class="panel">
+        <h3>CLI diff</h3>
+        <code class="command">{diffCommand}</code>
+      </div>
+      <div class="panel">
+        <h3>确认后同步</h3>
+        <code class="command">{syncCommand}</code>
+      </div>
+    </div>
+  </section>
+
+  <dialog class="confirm-dialog" id="runtime-confirm-dialog">
+    <form class="confirm-card" method="dialog">
+      <h3 id="runtime-confirm-title">确认操作</h3>
+      <p id="runtime-confirm-message"></p>
+      <div class="dialog-actions">
+        <button class="button" value="cancel">取消</button>
+        <button class="button primary" value="confirm">确认</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script>
+    const deleteButton = document.getElementById("device-delete-button");
+    const confirmDialog = document.getElementById("runtime-confirm-dialog");
+    const confirmTitle = document.getElementById("runtime-confirm-title");
+    const confirmMessage = document.getElementById("runtime-confirm-message");
+
+    function askConfirmation(title, message) {
+      return new Promise((resolve) => {
+        if (!(confirmDialog instanceof HTMLDialogElement)) {
+          resolve(false);
+          return;
+        }
+        if (confirmTitle) confirmTitle.textContent = title;
+        if (confirmMessage) confirmMessage.textContent = message;
+        const handleClose = () => {
+          confirmDialog.removeEventListener("close", handleClose);
+          resolve(confirmDialog.returnValue === "confirm");
+        };
+        confirmDialog.addEventListener("close", handleClose);
+        confirmDialog.showModal();
+      });
+    }
+
+    deleteButton?.addEventListener("click", async () => {
+      const id = deleteButton.getAttribute("data-device-id");
+      if (!id) return;
+      const confirmed = await askConfirmation("删除主机", `${id} 的扫描配置和对应快照会被移除。`);
+      if (!confirmed) return;
+      try {
+        const response = await fetch(`/api/runtime/devices/${encodeURIComponent(id)}`, {
+          method: "DELETE"
+        });
+        if (!response.ok) throw new Error(await response.text());
+        window.location.href = "/runtime/";
+      } catch (error) {
+        const message = `当前部署是只读静态站或 API 不可用，请手动编辑 runtime/devices/config.json。${error instanceof Error ? ` ${error.message}` : ""}`;
+        await askConfirmation("删除失败", message);
+      }
+    });
+  </script>
+</BaseLayout>

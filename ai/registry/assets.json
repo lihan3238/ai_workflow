@@ -1,0 +1,799 @@
+{
+  "schema_version": "1.0.0",
+  "generated_at": "2026-06-19T01:26:04.558Z",
+  "assets": [
+    {
+      "id": "agents-md-as-cross-tool-project-memory",
+      "kind": "card",
+      "domain": "principle",
+      "visibility": "team",
+      "status": "valid",
+      "title": "Use AGENTS.md + one-line CLAUDE.md @-import as cross-tool project memory",
+      "summary": "When a project needs the same rules across multiple AI tools (Codex, Cursor, Copilot, Claude Code), make AGENTS.md the single source of truth and replace CLAUDE.md with one line `@AGENTS.md` — same rules everywhere, no duplication or drift.",
+      "summary_zh": "多个 AI 工具要共用项目规则时:AGENTS.md 作唯一真相,CLAUDE.md 只留一行 @import,不漂移",
+      "tags": [
+        "agents-md",
+        "codex",
+        "claude-code",
+        "legacy-card"
+      ],
+      "context_cost": "low",
+      "routes": [
+        "codex",
+        "claude-code"
+      ],
+      "verify": {
+        "command": "From a fresh Claude Code session in a project with CLAUDE.md = `@AGENTS.md` and AGENTS.md = full rules, run /memory and confirm AGENTS.md content is loaded.",
+        "expected": "/memory lists CLAUDE.md and shows AGENTS.md expanded inline at the @-import point.",
+        "failure_next": "Check the @-import is at column 0 of CLAUDE.md; path resolves relative to CLAUDE.md's directory; recursive depth cap is 5."
+      },
+      "path": "ai/cards/legacy/agents-md-as-cross-tool-project-memory.md"
+    },
+    {
+      "id": "lihan-cards-agent-skills-validator-gotchas",
+      "kind": "card",
+      "domain": "coding",
+      "visibility": "team",
+      "status": "valid",
+      "title": "Agent Skills validators (skills-ref / skill-validator) fail CI on subtle SKILL.md format issues",
+      "summary": "Community Agent Skills validators fail CI on subtle SKILL.md format: skills-ref rejects flow-style allowed-tools; skill-validator wants the bundled dir named references/ and treats ANY warning as failure (exit 2).",
+      "summary_zh": "校验 SKILL.md 时:allowed-tools 用空格串(别用 [a,b])、bundled 目录叫 references/、warning 也算失败(exit 2)",
+      "tags": [
+        "skills",
+        "ci",
+        "quality-gate"
+      ],
+      "context_cost": "low",
+      "routes": [
+        "codex",
+        "claude-code"
+      ],
+      "verify": {
+        "command": "skills-ref validate skills/lihan-cards; echo sr=$?; skill-validator check skills/lihan-cards; echo sv=$?",
+        "expected": "sr=0 and sv=0. skill-validator exits 2 if ANY warning fires (e.g. a non-standard bundled dir), exit 1 on a hard error; a CI `run:` step fails on either.",
+        "failure_next": "Apply ## Fix: space-delimited allowed-tools, rename bundled dir to references/, resolve every warning. Re-run the validators at the SAME pinned versions CI uses, checking $? directly (a trailing pipe masks the exit code)."
+      },
+      "path": "ai/cards/imported-lihan-cards/agent-skills-validator-gotchas.md"
+    },
+    {
+      "id": "lihan-cards-agents-md-as-cross-tool-project-memory",
+      "kind": "card",
+      "domain": "principle",
+      "visibility": "team",
+      "status": "valid",
+      "title": "Use AGENTS.md + one-line CLAUDE.md @-import as cross-tool project memory",
+      "summary": "When a project needs the same rules across multiple AI tools (Codex, Cursor, Copilot, Claude Code), make AGENTS.md the single source of truth and replace CLAUDE.md with one line `@AGENTS.md` — same rules everywhere, no duplication or drift.",
+      "summary_zh": "多个 AI 工具要共用项目规则时:AGENTS.md 作唯一真相,CLAUDE.md 只留一行 @import,不漂移",
+      "tags": [
+        "agents-md",
+        "codex",
+        "claude-code"
+      ],
+      "context_cost": "low",
+      "routes": [
+        "codex",
+        "claude-code"
+      ],
+      "verify": {
+        "command": "From a fresh Claude Code session in a project with CLAUDE.md = `@AGENTS.md` and AGENTS.md = full rules, run /memory and confirm AGENTS.md content is loaded.",
+        "expected": "/memory lists CLAUDE.md and shows AGENTS.md expanded inline at the @-import point.",
+        "failure_next": "Check the @-import is at column 0 of CLAUDE.md; path resolves relative to CLAUDE.md's directory; recursive depth cap is 5."
+      },
+      "path": "ai/cards/imported-lihan-cards/agents-md-as-cross-tool-project-memory.md"
+    },
+    {
+      "id": "lihan-cards-align-with-remote-before-consult",
+      "kind": "card",
+      "domain": "coding",
+      "visibility": "team",
+      "status": "valid",
+      "title": "Refresh local source before consulting cards (this WSL host)",
+      "summary": "Before consulting lihan-cards on this WSL host, fast-forward the local blog clone (local-first reads lag after a merge) and verify cc-switch hasn't reverted the ~/.claude/CLAUDE.md & ~/.codex/AGENTS.md symlinks to empty files.",
+      "summary_zh": "本机 consult 前先 git pull 刷新本地卡库(本地读会滞后),并确认 cc-switch 没把 CLAUDE.md/AGENTS.md 软链打回空文件",
+      "tags": [
+        "wsl",
+        "claude-code",
+        "codex",
+        "git-workflow",
+        "registry",
+        "agent-protocol"
+      ],
+      "context_cost": "low",
+      "routes": [
+        "codex",
+        "claude-code"
+      ],
+      "verify": {
+        "command": "From the blog repo root run `git fetch -q && git status -sb | head -1`; and run `ls -ld ~/.claude/CLAUDE.md ~/.codex/AGENTS.md`.",
+        "expected": "status line is `## main...origin/main` with no `behind`; both ls lines are symlinks `-> .../agents/user-AGENTS.md` (NOT `-rw...` 0-byte regular files).",
+        "failure_next": "Behind remote → `git pull --ff-only`; clone unavailable → fall back to the public registry URL for this consult and report the sync issue. Symlink reverted to a regular/empty file → cc-switch clobbered it: `bash scripts/install.sh`, delete any 0-byte `*.bak.*`, and disable cc-switch's skill / user-prompt (用户提示词) management in its GUI."
+      },
+      "path": "ai/cards/imported-lihan-cards/align-with-remote-before-consult.md"
+    },
+    {
+      "id": "lihan-cards-change-scoping-gates",
+      "kind": "card",
+      "domain": "principle",
+      "visibility": "team",
+      "status": "valid",
+      "title": "Gate any candidate code change before writing code",
+      "summary": "Before taking on any code change (bug fix, feature, refactor, external contribution), walk 5 sequential gates — eligibility, collision, reality, clarity, scope — rejecting as early as possible; don't retry a rejected candidate without new evidence; conservatism scales with blast radius.",
+      "summary_zh": "动代码前先过五道闸:资格、冲突、现实、清晰、范围;没有新证据不重试,保守程度看影响面",
+      "tags": [
+        "guardrail",
+        "git-workflow"
+      ],
+      "context_cost": "low",
+      "routes": [
+        "codex",
+        "claude-code"
+      ],
+      "verify": {
+        "command": "Pick a candidate change (issue, refactor target, new feature idea); walk through the 5 gates without skipping; reject at the first gate that fails.",
+        "expected": "Either the candidate clears all 5 gates and earns code-writing time, OR it's rejected at a specific gate with a one-sentence reason.",
+        "failure_next": "Retrying a rejected candidate with no new evidence → stop. Rejecting cheap, reversible, branch-confined work on absolutist grounds → re-check the cost asymmetry instead of defaulting to no."
+      },
+      "path": "ai/cards/imported-lihan-cards/change-scoping-gates.md"
+    },
+    {
+      "id": "lihan-cards-docker-desktop-excluded-port-range",
+      "kind": "card",
+      "domain": "coding",
+      "visibility": "team",
+      "status": "valid",
+      "title": "Docker Desktop port bind blocked by Windows excluded range",
+      "summary": "When Docker Desktop says a port is forbidden, check Windows excluded TCP ranges before chasing container logs or app listeners.",
+      "summary_zh": "Docker Desktop 报端口禁用,先查 Windows 排除端口段,别先翻容器日志",
+      "tags": [
+        "docker",
+        "windows",
+        "wsl",
+        "networking"
+      ],
+      "context_cost": "medium",
+      "routes": [
+        "codex",
+        "claude-code"
+      ],
+      "verify": {
+        "command": "On Windows: netsh interface ipv4 show excludedportrange protocol=tcp; then compare the failing published port against the listed ranges.",
+        "expected": "If the failed Docker published port falls inside an excluded range, moving only the host-side port outside excluded and dynamic ranges lets Docker publish successfully.",
+        "failure_next": "If the port is not excluded, inspect actual listeners with netstat/Get-NetTCPConnection, then check Docker Desktop/HNS logs before changing compose."
+      },
+      "path": "ai/cards/imported-lihan-cards/docker-desktop-excluded-port-range.md"
+    },
+    {
+      "id": "lihan-cards-github-required-check-card-automerge",
+      "kind": "card",
+      "domain": "coding",
+      "visibility": "team",
+      "status": "valid",
+      "title": "GitHub required checks for card PR auto-merge",
+      "summary": "When GitHub auto-merge depends on CI, keep the required workflow unfiltered and put branch/path eligibility inside the job; merge card PRs only after the required check is green.",
+      "summary_zh": "required check 别用 paths,放 job 内 guard",
+      "tags": [
+        "ci",
+        "git-workflow",
+        "quality-gate",
+        "agent-protocol"
+      ],
+      "context_cost": "low",
+      "routes": [
+        "codex",
+        "claude-code"
+      ],
+      "verify": {
+        "command": "Manual/state check: required workflow has an unfiltered pull_request trigger, card/* eligibility is enforced inside the job with --card-only-strict, repo allow_auto_merge=true, and main requires the validate check.",
+        "expected": "Every PR reports the required validate check; card/* PRs fail validate if paths escape ai/cards/**, static/ai/registry.json, static/ai/stats.json; post-green gh pr merge --squash --auto can publish a card PR.",
+        "failure_next": "Remove pull_request.paths from the required workflow, add an in-job card/* --card-only-strict guard, enable repository auto-merge, and require the validate status check on main."
+      },
+      "path": "ai/cards/imported-lihan-cards/github-required-check-card-automerge.md"
+    },
+    {
+      "id": "lihan-cards-hf-download-local-dir-double-download-trap",
+      "kind": "card",
+      "domain": "research",
+      "visibility": "team",
+      "status": "valid",
+      "title": "hf download --local-dir + from_pretrained(hub_id) silently re-downloads the whole model",
+      "summary": "hf download --local-dir writes a flat path that from_pretrained(hub_id) cannot see, so loading triggers a full re-download. Pick one layout per project.",
+      "summary_zh": "HF --local-dir 下载后 from_pretrained 看不到会整模型重下,一个项目只选一种布局",
+      "tags": [
+        "huggingface"
+      ],
+      "context_cost": "medium",
+      "routes": [
+        "codex",
+        "claude-code"
+      ],
+      "verify": {
+        "command": "After `hf download Qwen/Qwen3-8B --local-dir ~/.cache/huggingface/hub/Qwen3-8B`, run `python -c \"from transformers import AutoModelForCausalLM; AutoModelForCausalLM.from_pretrained('Qwen/Qwen3-8B')\"` and watch network.",
+        "expected": "Bug reproduces — the model RE-DOWNLOADS into ~/.cache/huggingface/hub/models--Qwen--Qwen3-8B/ even though the bytes are already on disk at Qwen3-8B/.",
+        "failure_next": "If no re-download happens, HF may have started symlinking the two layouts together; otherwise apply Fix below."
+      },
+      "path": "ai/cards/imported-lihan-cards/hf-download-local-dir-double-download-trap.md"
+    },
+    {
+      "id": "lihan-cards-low-token-high-trigger-card-authoring",
+      "kind": "card",
+      "domain": "principle",
+      "visibility": "team",
+      "status": "valid",
+      "title": "Author cards/skills for low token cost and high trigger accuracy",
+      "summary": "In a card or Skill, the description/registry summary is the load-bearing trigger surface AND an always-loaded token cost: state what it does + when to load it, keep the actual fix in the body, put key sections at the body's ends. Load when authoring or editing a card or SKILL.md.",
+      "summary_zh": "写卡/skill:summary 既是触发面也是常驻成本,写清'做什么+何时用',fix 留正文,要点放首尾",
+      "tags": [
+        "asset-design",
+        "context-management",
+        "skills"
+      ],
+      "context_cost": "low",
+      "routes": [
+        "codex",
+        "claude-code"
+      ],
+      "verify": {
+        "command": "Take the card/skill being authored: (1) read ONLY its description/registry summary and decide load-or-skip without opening the body; (2) check the description is third person, <=1024 chars, and does NOT spell out the full fix/workflow; (3) check the body's Trigger and Reuse Rule sit at the top and bottom, not buried mid-body.",
+        "expected": "From the summary alone you can decide load vs skip; the description carries what+when but not the step-by-step fix; Trigger/Reuse-Rule are at the body's two ends.",
+        "failure_next": "Had to open the body to know when it applies -> tighten the summary's when-clause. Summary already contains the whole fix -> move the fix into the body (and confirm the consult protocol still forces open+verify). Key guidance buried mid-body -> move it to an end."
+      },
+      "path": "ai/cards/imported-lihan-cards/low-token-high-trigger-card-authoring.md"
+    },
+    {
+      "id": "lihan-cards-model-decoupled-project-philosophy",
+      "kind": "card",
+      "domain": "principle",
+      "visibility": "team",
+      "status": "valid",
+      "title": "Build model-decoupled projects",
+      "summary": "When making project or strategy decisions, treat frontier models as a rising external capability and build durable value in data, workflows, evaluations, interfaces, and institutions that improve as models improve.",
+      "summary_zh": "做项目/战略决策时:把前沿模型当会涨的外部能力,价值押在数据、流程、评测、接口上",
+      "tags": [
+        "project-philosophy",
+        "research"
+      ],
+      "context_cost": "medium",
+      "routes": [
+        "codex",
+        "claude-code"
+      ],
+      "verify": {
+        "command": "For the candidate project, fill five rows: substitution-risk, durable-substrate, agent-interface, model-upgrade-dividend, verification-loop.",
+        "expected": "The project has a durable substrate outside the model layer and at least one clear path where stronger general models make it more valuable.",
+        "failure_next": "If the value collapses when a frontier agent gets better, re-scope around proprietary data, workflow ownership, evaluation, trust, distribution, or physical/institutional execution."
+      },
+      "path": "ai/cards/imported-lihan-cards/model-decoupled-project-philosophy.md"
+    },
+    {
+      "id": "lihan-cards-ollama-localhost-proxy-bypass",
+      "kind": "card",
+      "domain": "coding",
+      "visibility": "team",
+      "status": "valid",
+      "title": "Local Ollama calls hijacked by proxy env",
+      "summary": "When a runtime-host local Ollama or localhost API call fails only under HTTP_PROXY/HTTPS_PROXY, bypass proxies in code instead of relying on NO_PROXY being set correctly.",
+      "summary_zh": "有代理时本地 Ollama 请求要代码级绕过代理",
+      "tags": [
+        "networking",
+        "remote-dev",
+        "wsl"
+      ],
+      "context_cost": "low",
+      "routes": [
+        "codex",
+        "claude-code"
+      ],
+      "verify": {
+        "command": "On the runtime host, run the same localhost API request with `env -u NO_PROXY -u no_proxy HTTP_PROXY=$PROXY_URL HTTPS_PROXY=$PROXY_URL ...`; then rerun through a client/opener that explicitly disables proxies, e.g. Python `urllib.request.build_opener(urllib.request.ProxyHandler({}))`.",
+        "expected": "If the default client fails or reaches the proxy while the no-proxy client succeeds against `127.0.0.1`/`localhost`, the root cause is proxy inheritance for a runtime-host local service request.",
+        "failure_next": "If both clients fail, inspect whether the local service is running and bound to the expected interface/port. If both succeed, keep NO_PROXY but do not change code for this symptom."
+      },
+      "path": "ai/cards/imported-lihan-cards/ollama-localhost-proxy-bypass.md"
+    },
+    {
+      "id": "lihan-cards-paper-reading-three-pass",
+      "kind": "card",
+      "domain": "research",
+      "visibility": "team",
+      "status": "valid",
+      "title": "Read papers in three passes",
+      "summary": "When reading a research paper, use Keshav's three-pass method plus active notes, citation triage, and reproducibility checks to turn it into decisions instead of passive reading.",
+      "summary_zh": "读论文时用 Keshav 三遍法+主动笔记+引用筛选+可复现核查,把读变成做决策",
+      "tags": [
+        "paper-reading",
+        "research"
+      ],
+      "context_cost": "medium",
+      "routes": [
+        "codex",
+        "claude-code"
+      ],
+      "verify": {
+        "command": "Open one paper note and check for: 5Cs skim, contribution map, evidence table, unclear claims, citation actions, and read/skip/deep-dive decision.",
+        "expected": "The note shows why the paper matters, what is reliable, what is unclear, and what action follows.",
+        "failure_next": "If the note is mostly summary, reread with Pass 2/3 questions and add evidence, assumptions, limitations, and next actions."
+      },
+      "path": "ai/cards/imported-lihan-cards/paper-reading-three-pass.md"
+    },
+    {
+      "id": "lihan-cards-pre-push-quality-gate",
+      "kind": "card",
+      "domain": "coding",
+      "visibility": "team",
+      "status": "valid",
+      "title": "Pre-push verification gates",
+      "summary": "Run format / lint / type / test / coverage / change-hygiene locally before any git push or PR creation; CI would catch this, but locally is 3x faster.",
+      "summary_zh": "push/PR 前先本地跑格式、lint、类型、测试、覆盖率、改动卫生,比等 CI 快 3 倍",
+      "tags": [
+        "quality-gate",
+        "ci"
+      ],
+      "context_cost": "low",
+      "routes": [
+        "codex",
+        "claude-code"
+      ],
+      "verify": {
+        "command": "Before pushing, run the project's documented gate suite (per its AGENTS.md / CLAUDE.md / README); confirm every gate exits 0; only then run git push.",
+        "expected": "Local gate set passes; subsequent CI is a re-run of the same checks, not a new failure surface.",
+        "failure_next": "If a local gate fails, fix and re-run before push. If CI fails after local passes, the gate set is incomplete — add the missing check to the local suite first."
+      },
+      "path": "ai/cards/imported-lihan-cards/pre-push-quality-gate.md"
+    },
+    {
+      "id": "lihan-cards-prefer-upstream-tools-over-bespoke-plumbing",
+      "kind": "card",
+      "domain": "principle",
+      "visibility": "team",
+      "status": "valid",
+      "title": "Prefer mature upstream tools over bespoke plumbing",
+      "summary": "When deciding whether to build a tool or reuse an existing one, prefer mature upstream tools and thin adapters over bespoke plumbing — unless no adequate option exists and a one-day MVP serves a repeated, high-frequency workflow.",
+      "summary_zh": "要不要自己造工具时:优先复用成熟上游+薄适配,除非没得选且一天能出 MVP",
+      "tags": [
+        "project-philosophy",
+        "guardrail",
+        "speckit",
+        "agent-protocol"
+      ],
+      "context_cost": "low",
+      "routes": [
+        "codex",
+        "claude-code"
+      ],
+      "verify": {
+        "command": "For a candidate tool/workflow, fill rows: problem, mature-upstream-options, adapter-boundary, missing-capability, repeat-frequency, one-day-MVP, decoupling-plan, decision.",
+        "expected": "Reuse an upstream/community solution or add only a thin adapter unless a repeated high-frequency workflow has no adequate mature option and can ship as a one-day MVP.",
+        "failure_next": "If the decision depends on vague control, convenience, or current tool unfamiliarity, stop building; survey upstream options, narrow to a thin adapter, or drop the work."
+      },
+      "path": "ai/cards/imported-lihan-cards/prefer-upstream-tools-over-bespoke-plumbing.md"
+    },
+    {
+      "id": "lihan-cards-research-metrics-from-current-sota",
+      "kind": "card",
+      "domain": "research",
+      "visibility": "team",
+      "status": "valid",
+      "title": "Research metrics come from current SOTA, never self-invented",
+      "summary": "For any research evaluation, use metrics drawn from the current SOTA literature of that subfield (re-derived from recent papers each time), never self-invented custom metrics.",
+      "summary_zh": "科研评测用当下SOTA论文的通用指标,别自造(指标会演进,每次重查)",
+      "tags": [
+        "research",
+        "paper-reading"
+      ],
+      "context_cost": "low",
+      "routes": [
+        "codex",
+        "claude-code"
+      ],
+      "verify": {
+        "command": "For each reported metric, cite >=1 recent SOTA paper in the subfield that uses it; confirm it is not a homemade proxy and reuses the repo's metric impl where present.",
+        "expected": "Every reported metric traces to a current SOTA paper or standard tool; no self-invented metric appears in the evidence.",
+        "failure_next": "Replace the custom metric with the current SOTA-standard one (re-derived from recent papers), reuse repo impl if any, and re-run."
+      },
+      "path": "ai/cards/imported-lihan-cards/research-metrics-from-current-sota.md"
+    },
+    {
+      "id": "lihan-cards-sync-main-before-card-branch",
+      "kind": "card",
+      "domain": "coding",
+      "visibility": "team",
+      "status": "valid",
+      "title": "Sync origin/main before card work; regenerate registry on conflict",
+      "summary": "static/ai/registry.json is generated and the ratified card lane auto-merges often, so branch any card/registry/spec work from a freshly-fetched origin/main; resolve registry.json merge conflicts by re-running build_registry.py, never by hand.",
+      "summary_zh": "动卡片/registry/spec 前先 fetch 最新 origin/main 再开分支(card lane 常自动合并);registry.json 冲突用 build_registry.py 重生成解决,别手动 merge",
+      "tags": [
+        "git-workflow",
+        "registry",
+        "ci"
+      ],
+      "context_cost": "low",
+      "routes": [
+        "codex",
+        "claude-code"
+      ],
+      "verify": {
+        "command": "From the blog repo root: `git fetch -q origin main && git rev-list --left-right --count HEAD...origin/main`; after any registry.json conflict, `python scripts/ai/build_registry.py && grep -c '^<<<<<<<' static/ai/registry.json`.",
+        "expected": "Before branching the right-side (behind) count is 0. After regenerating, grep returns 0 conflict markers and `python scripts/ai/build_registry.py --check` prints 'registry is current'.",
+        "failure_next": "Behind origin/main → branch from origin/main (or `git pull --ff-only` first). registry.json conflict markers present → run `python scripts/ai/build_registry.py` to rebuild from the card set, `git add static/ai/registry.json`, then re-run `validate_assets.py` + `build_registry.py --check`; never hand-merge the generated JSON."
+      },
+      "path": "ai/cards/imported-lihan-cards/sync-main-before-card-branch.md"
+    },
+    {
+      "id": "lihan-cards-utc-safe-ai-card-dates",
+      "kind": "card",
+      "domain": "coding",
+      "visibility": "team",
+      "status": "valid",
+      "title": "Use UTC-safe dates in AI cards",
+      "summary": "When setting created/last_verified dates in AI card frontmatter, use UTC (`date -u +%F`); local next-day dates can otherwise fail GitHub Actions as future dates.",
+      "summary_zh": "写卡片日期时用 date -u +%F;本地次日日期会被 GitHub Actions 当未来日期判错",
+      "tags": [
+        "asset-design",
+        "ci"
+      ],
+      "context_cost": "low",
+      "routes": [
+        "codex",
+        "claude-code"
+      ],
+      "verify": {
+        "command": "date -u +%F && python -m unittest discover -s tests && python scripts/ai/validate_assets.py",
+        "expected": "The card frontmatter dates are not later than UTC today, and repository card validation reports no future-date errors.",
+        "failure_next": "If validation says 'created' or 'last_verified' is a future date, replace the frontmatter dates with `date -u +%F`, rebuild registry, and rerun tests."
+      },
+      "path": "ai/cards/imported-lihan-cards/utc-safe-ai-card-dates.md"
+    },
+    {
+      "id": "lihan-cards-wsl-coder-agent-infra-map",
+      "kind": "card",
+      "domain": "environment",
+      "visibility": "team",
+      "status": "valid",
+      "title": "WSL coder-agent infra map",
+      "summary": "Look up when you need Lihan's WSL coding-agent infra facts — proxies, model gateways, skills, Spec Kit bridge, Docker services, WireGuard hosts, and safe checks — rather than rediscovering them.",
+      "summary_zh": "要查 WSL 编码 agent 基建时就看这张:代理、模型网关、skills、Spec Kit 桥、Docker、WireGuard",
+      "tags": [
+        "wsl",
+        "codex",
+        "claude-code",
+        "mcp",
+        "networking",
+        "docker",
+        "speckit",
+        "skills"
+      ],
+      "context_cost": "medium",
+      "routes": [
+        "codex",
+        "claude-code"
+      ],
+      "verify": {
+        "command": "codex mcp get playwright --json && claude mcp get playwright && docker ps --format '{{.Names}} {{.Image}} {{.Ports}}' && ssh -o BatchMode=yes -o ConnectTimeout=3 10.77.0.101 true && ssh -o BatchMode=yes -o ConnectTimeout=3 10.77.0.102 true",
+        "expected": "Playwright MCP is configured in Codex and Claude Code, Docker shows cli-proxy-api on 8317, and both WireGuard SSH hosts return exit 0.",
+        "failure_next": "Treat this card as stale for the failing subsystem; re-run the focused checks in Fix and update the map before relying on it."
+      },
+      "path": "ai/cards/imported-lihan-cards/wsl-coder-agent-infra-map.md"
+    },
+    {
+      "id": "model-decoupled-project-philosophy",
+      "kind": "card",
+      "domain": "principle",
+      "visibility": "team",
+      "status": "valid",
+      "title": "Build model-decoupled projects",
+      "summary": "When making project or strategy decisions, treat frontier models as a rising external capability and build durable value in data, workflows, evaluations, interfaces, and institutions that improve as models improve.",
+      "summary_zh": "做项目/战略决策时:把前沿模型当会涨的外部能力,价值押在数据、流程、评测、接口上",
+      "tags": [
+        "project-philosophy",
+        "research",
+        "legacy-card"
+      ],
+      "context_cost": "medium",
+      "routes": [
+        "codex",
+        "claude-code"
+      ],
+      "verify": {
+        "command": "For the candidate project, fill five rows: substitution-risk, durable-substrate, agent-interface, model-upgrade-dividend, verification-loop.",
+        "expected": "The project has a durable substrate outside the model layer and at least one clear path where stronger general models make it more valuable.",
+        "failure_next": "If the value collapses when a frontier agent gets better, re-scope around proprietary data, workflow ownership, evaluation, trust, distribution, or physical/institutional execution."
+      },
+      "path": "ai/cards/legacy/model-decoupled-project-philosophy.md"
+    },
+    {
+      "id": "model-decoupled-workflow-home",
+      "kind": "card",
+      "domain": "principle",
+      "visibility": "team",
+      "status": "valid",
+      "title": "Build AI Workflow Home around durable assets",
+      "summary": "Use when deciding whether an AI workflow feature creates durable value beyond a specific model or coding agent.",
+      "summary_zh": "把价值押在资产、验证、接口和备份上,不要押单一模型",
+      "tags": [
+        "model-decoupled",
+        "workflow",
+        "guardrail"
+      ],
+      "context_cost": "low",
+      "routes": [
+        "codex",
+        "claude-code",
+        "hermes",
+        "openclaw"
+      ],
+      "verify": {
+        "command": "Fill rows for substitution-risk, durable-substrate, agent-interface, model-upgrade-dividend, and verification-loop.",
+        "expected": "The feature still has value if Codex, Hermes, OpenClaw, or Claude is replaced by a stronger model/tool.",
+        "failure_next": "Rescope around owned workflow assets, validation, backups, interfaces, or operator habits."
+      },
+      "path": "ai/cards/model-decoupled-workflow-home.md"
+    },
+    {
+      "id": "pre-push-quality-gate",
+      "kind": "card",
+      "domain": "coding",
+      "visibility": "team",
+      "status": "valid",
+      "title": "Pre-push verification gates",
+      "summary": "Run format / lint / type / test / coverage / change-hygiene locally before any git push or PR creation; CI would catch this, but locally is 3x faster.",
+      "summary_zh": "push/PR 前先本地跑格式、lint、类型、测试、覆盖率、改动卫生,比等 CI 快 3 倍",
+      "tags": [
+        "quality-gate",
+        "ci",
+        "legacy-card"
+      ],
+      "context_cost": "low",
+      "routes": [
+        "codex",
+        "claude-code"
+      ],
+      "verify": {
+        "command": "Before pushing, run the project's documented gate suite (per its AGENTS.md / CLAUDE.md / README); confirm every gate exits 0; only then run git push.",
+        "expected": "Local gate set passes; subsequent CI is a re-run of the same checks, not a new failure surface.",
+        "failure_next": "If a local gate fails, fix and re-run before push. If CI fails after local passes, the gate set is incomplete — add the missing check to the local suite first."
+      },
+      "path": "ai/cards/legacy/pre-push-quality-gate.md"
+    },
+    {
+      "id": "prefer-upstream-tools-over-bespoke-plumbing",
+      "kind": "card",
+      "domain": "principle",
+      "visibility": "team",
+      "status": "valid",
+      "title": "Prefer mature upstream tools over bespoke plumbing",
+      "summary": "When deciding whether to build a tool or reuse an existing one, prefer mature upstream tools and thin adapters over bespoke plumbing — unless no adequate option exists and a one-day MVP serves a repeated, high-frequency workflow.",
+      "summary_zh": "要不要自己造工具时:优先复用成熟上游+薄适配,除非没得选且一天能出 MVP",
+      "tags": [
+        "project-philosophy",
+        "guardrail",
+        "speckit",
+        "agent-protocol",
+        "legacy-card"
+      ],
+      "context_cost": "low",
+      "routes": [
+        "codex",
+        "claude-code"
+      ],
+      "verify": {
+        "command": "For a candidate tool/workflow, fill rows: problem, mature-upstream-options, adapter-boundary, missing-capability, repeat-frequency, one-day-MVP, decoupling-plan, decision.",
+        "expected": "Reuse an upstream/community solution or add only a thin adapter unless a repeated high-frequency workflow has no adequate mature option and can ship as a one-day MVP.",
+        "failure_next": "If the decision depends on vague control, convenience, or current tool unfamiliarity, stop building; survey upstream options, narrow to a thin adapter, or drop the work."
+      },
+      "path": "ai/cards/legacy/prefer-upstream-tools-over-bespoke-plumbing.md"
+    },
+    {
+      "id": "programmer-onboarding",
+      "kind": "card",
+      "domain": "coding",
+      "visibility": "team",
+      "status": "valid",
+      "title": "Onboard a programmer machine into AI Workflow Home",
+      "summary": "Use when setting up Lihan's or his father's machine to use the shared AI workflow assets with Codex and Claude Code.",
+      "summary_zh": "给程序员电脑安装共享 AI 工作流资产",
+      "tags": [
+        "onboarding",
+        "codex",
+        "claude-code",
+        "runtime"
+      ],
+      "context_cost": "medium",
+      "routes": [
+        "codex",
+        "claude-code"
+      ],
+      "verify": {
+        "command": "npm run validate && node scripts/install-runtime.mjs --dry-run",
+        "expected": "Assets validate and installer reports only named Codex/Claude paths.",
+        "failure_next": "Fix asset schema errors or installer target paths before touching the machine."
+      },
+      "path": "ai/cards/programmer-onboarding.md"
+    },
+    {
+      "id": "codex-default",
+      "kind": "prompt",
+      "domain": "coding",
+      "visibility": "private",
+      "status": "valid",
+      "title": "Codex default operating prompt pack",
+      "summary": "Use as the durable Codex-facing operating guidance for AI Workflow Home repositories.",
+      "summary_zh": "Codex 默认工作规则:先查资产、验证、少造轮子",
+      "tags": [
+        "codex",
+        "prompts",
+        "workflow"
+      ],
+      "context_cost": "low",
+      "routes": [
+        "codex"
+      ],
+      "verify": {
+        "command": "Inspect AGENTS.md and workflow-home skill; confirm they point at the same consult/capture/verify rules.",
+        "expected": "Codex receives one canonical rule path and no duplicated prompt mirror.",
+        "failure_next": "Move shared rules into AGENTS.md or the workflow-home skill; remove duplicated mirrors."
+      },
+      "path": "ai/prompts/codex-default.md"
+    },
+    {
+      "id": "lihan-cards-legacy",
+      "kind": "skill",
+      "domain": "coding",
+      "visibility": "team",
+      "status": "valid",
+      "title": "Legacy lihan-cards skill snapshot",
+      "summary": "Consults Lihan's captured experience before non-trivial work and captures verified, generalizable lessons as cards (\"consult cards\", \"查一下经验\", \"先看看有没有踩过这个坑\", \"总结成 card\", \"capture this as a card\"). Routes engineering work to the Spec Kit + bridge workflow, research work to the science workflow (papers, experiments, GPU servers, notes, manuscripts), and debugging diagnosis to prior engineering notes. Local-first: per-repo mode lock, smallest reference bundle, verify before applying. Also fires at a task-completion checkpoint per references/proactive.md. Imported as a non-default AI Workflow Home migration snapshot.",
+      "summary_zh": "旧博客 lihan-cards 技能迁移快照",
+      "tags": [
+        "skills",
+        "lihan-cards",
+        "legacy-skill"
+      ],
+      "context_cost": "medium",
+      "routes": [
+        "codex",
+        "claude-code"
+      ],
+      "verify": {
+        "command": "npm run validate && npm run check:registry",
+        "expected": "Legacy skill snapshot validates as an AI Workflow Home skill asset.",
+        "failure_next": "Fix transformed metadata before using the snapshot for migration tests."
+      },
+      "path": "ai/skills/lihan-cards-legacy/SKILL.md"
+    },
+    {
+      "id": "workflow-home",
+      "kind": "skill",
+      "domain": "coding",
+      "visibility": "team",
+      "status": "valid",
+      "title": "AI Workflow Home entry skill",
+      "summary": "Use to consult, capture, validate, and install AI Workflow Home assets for Codex/Claude/Hermes/OpenClaw machines; local runtime first, web window second.",
+      "summary_zh": "AI Workflow Home 唯一入口:查资产、写草稿、装运行时、做验证",
+      "tags": [
+        "skills",
+        "codex",
+        "claude-code",
+        "workflow"
+      ],
+      "context_cost": "medium",
+      "routes": [
+        "codex",
+        "claude-code",
+        "hermes",
+        "openclaw"
+      ],
+      "verify": {
+        "command": "npm run validate && npm run check:registry",
+        "expected": "All AI assets validate and the registry is current.",
+        "failure_next": "Fix asset schema or regenerate registry before installing this skill."
+      },
+      "path": "ai/skills/workflow-home/SKILL.md"
+    },
+    {
+      "id": "home-lab-example",
+      "kind": "profile",
+      "domain": "environment",
+      "visibility": "private",
+      "status": "valid",
+      "title": "Example home lab runtime profile",
+      "summary": "Use as a non-secret template for Linux-server-now and NAS-later AI Workflow Home deployment facts.",
+      "summary_zh": "家庭服务器/NAS 部署事实模板,只放非密信息",
+      "tags": [
+        "environment",
+        "server",
+        "nas",
+        "backup"
+      ],
+      "context_cost": "low",
+      "routes": [
+        "codex",
+        "claude-code"
+      ],
+      "verify": {
+        "command": "Inspect the profile and confirm it contains hostnames, ports, and paths only; no keys, tokens, passwords, cookies, or private keys.",
+        "expected": "All secrets are referenced by local env files or secret managers, not stored in this repo.",
+        "failure_next": "Remove secrets from the profile and rotate any leaked credential."
+      },
+      "path": "ai/profiles/home-lab.example.md"
+    },
+    {
+      "id": "lihan-cards-user-agents-profile",
+      "kind": "profile",
+      "domain": "environment",
+      "visibility": "private",
+      "status": "valid",
+      "title": "Legacy lihan-cards user AGENTS profile snapshot",
+      "summary": "Private migration snapshot of the old user-level AGENTS.md canonical guidance from lihan3238.github.io.",
+      "summary_zh": "旧 lihan-cards 用户级 AGENTS 配置私有快照",
+      "tags": [
+        "agents-md",
+        "codex",
+        "claude-code",
+        "migration"
+      ],
+      "context_cost": "high",
+      "routes": [
+        "codex",
+        "claude-code"
+      ],
+      "verify": {
+        "command": "Manual inspection confirms this imported profile is a migration snapshot only and contains no API keys, passwords, bearer tokens, cookies, private keys, or raw credentials.",
+        "expected": "The profile is private, source-preserving, and used only for migration/reference.",
+        "failure_next": "Remove or redact the offending value, rotate any leaked credential, then rebuild the registry."
+      },
+      "path": "ai/profiles/imported-lihan-cards/user-agents.md"
+    },
+    {
+      "id": "lihan-cards-user-repo-modes-profile",
+      "kind": "profile",
+      "domain": "environment",
+      "visibility": "private",
+      "status": "valid",
+      "title": "Legacy lihan-cards repo mode lock profile snapshot",
+      "summary": "Private migration snapshot of the old per-repository lihan-cards mode lock map.",
+      "summary_zh": "旧 lihan-cards 仓库模式锁私有快照",
+      "tags": [
+        "lihan-cards",
+        "mode-lock",
+        "migration"
+      ],
+      "context_cost": "high",
+      "routes": [
+        "codex",
+        "claude-code"
+      ],
+      "verify": {
+        "command": "Manual inspection confirms this imported profile is a migration snapshot only and contains no API keys, passwords, bearer tokens, cookies, private keys, or raw credentials.",
+        "expected": "The profile is private, source-preserving, and used only for migration/reference.",
+        "failure_next": "Remove or redact the offending value, rotate any leaked credential, then rebuild the registry."
+      },
+      "path": "ai/profiles/imported-lihan-cards/user-repo-modes.md"
+    },
+    {
+      "id": "lihan-cards-user-research-profile",
+      "kind": "profile",
+      "domain": "research",
+      "visibility": "private",
+      "status": "valid",
+      "title": "Legacy lihan-cards research runtime profile snapshot",
+      "summary": "Private migration snapshot of the old non-secret research runtime profile used by lihan-cards research routing.",
+      "summary_zh": "旧 lihan-cards 研究运行配置私有快照",
+      "tags": [
+        "lihan-cards",
+        "research",
+        "migration"
+      ],
+      "context_cost": "high",
+      "routes": [
+        "codex",
+        "claude-code"
+      ],
+      "verify": {
+        "command": "Manual inspection confirms this imported profile is a migration snapshot only and contains no API keys, passwords, bearer tokens, cookies, private keys, or raw credentials.",
+        "expected": "The profile is private, source-preserving, and used only for migration/reference.",
+        "failure_next": "Remove or redact the offending value, rotate any leaked credential, then rebuild the registry."
+      },
+      "path": "ai/profiles/imported-lihan-cards/user-research-profile.md"
+    }
+  ]
+}

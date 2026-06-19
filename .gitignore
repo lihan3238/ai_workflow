@@ -1,0 +1,12 @@
+node_modules/
+dist/
+dist-operator/
+dist-family/
+.astro/
+.worktrees/
+coverage/
+*.log
+.DS_Store
+
+.playwright-mcp/
+ai-workflow-home-*.png

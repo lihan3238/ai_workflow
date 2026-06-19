@@ -1,0 +1,29 @@
+---
+import { getCollection } from "astro:content";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+
+const posts = (await getCollection("posts", ({ data }) => data.visibility === "public")).sort(
+  (a, b) => b.data.date.valueOf() - a.data.date.valueOf()
+);
+---
+
+<BaseLayout title="Blog" section="blog">
+  <p class="eyebrow">Writing</p>
+  <h1 class="page-title">技术博客和阶段记录保留人的语气，不强行压成 card。</h1>
+  <p class="lead">可复用、可验证的经验进入 AI assets；长解释、复盘和随想留在博文里。</p>
+
+  <section class="section">
+    <div class="grid">
+      {posts.map((post) => (
+        <a class="post-row" href={`/blog/${post.id}/`}>
+          <time>{post.data.date.toISOString().slice(0, 10)}</time>
+          <h3>{post.data.title}</h3>
+          <p>{post.data.description}</p>
+          <div class="tag-row">
+            {post.data.tags.map((tag) => <span class="tag">{tag}</span>)}
+          </div>
+        </a>
+      ))}
+    </div>
+  </section>
+</BaseLayout>

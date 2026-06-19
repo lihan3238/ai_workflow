@@ -1,0 +1,62 @@
+{
+  "id": "father-linux",
+  "label": "Father Linux workstation",
+  "ip": "10.81.2.18",
+  "user": "rocky",
+  "os": {
+    "name": "Rocky Linux",
+    "pretty_name": "Rocky Linux 9.7 (Blue Onyx)",
+    "kernel": "Linux 5.14.0-611.5.1.el9_7.x86_64",
+    "arch": "x86_64"
+  },
+  "tools": {
+    "claude": {
+      "name": "Claude Code",
+      "installed": false,
+      "managed_by_cc_switch": false
+    },
+    "codex": {
+      "name": "Codex",
+      "installed": false,
+      "managed_by_cc_switch": false
+    },
+    "cc_switch": {
+      "name": "cc-switch",
+      "installed": false,
+      "managed_by_cc_switch": false
+    }
+  },
+  "online": true,
+  "last_seen": "2026-06-19T01:26:15.612Z",
+  "inventory_status": "guide-only",
+  "inventory_note": "SSH probe succeeded; remote project root /home/rocky/work/ai_workflow was not found.",
+  "agent_guides": {
+    "agents_md": {
+      "path": "~/.codex/AGENTS.md",
+      "status": "missing"
+    },
+    "claude_md": {
+      "path": "~/.claude/CLAUDE.md",
+      "status": "missing"
+    }
+  },
+  "guide_verification": {
+    "status": "mismatch",
+    "mode": "missing",
+    "detail": "AGENTS.md 或 CLAUDE.md 缺失"
+  },
+  "skills": [
+    {
+      "tool": "codex",
+      "name": "workflow-home",
+      "status": "unknown"
+    },
+    {
+      "tool": "claude",
+      "name": "workflow-home",
+      "status": "unknown"
+    }
+  ],
+  "projects": [],
+  "assets": []
+}
