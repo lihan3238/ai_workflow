@@ -35,10 +35,10 @@
       "name": "cc-switch",
       "installed": true,
       "binary_path": "/usr/bin/cc-switch",
+      "version": "3.16.3",
       "config_paths": [
         "/home/lihan/.cc-switch/settings.json"
       ],
-      "managed_by_cc_switch": false,
       "data_paths": [
         "/home/lihan/.cc-switch/cc-switch.db"
       ],
@@ -46,7 +46,7 @@
     }
   },
   "online": true,
-  "last_seen": "2026-06-19T07:12:29.983Z",
+  "last_seen": "2026-06-19T07:40:48.912Z",
   "inventory_status": "complete",
   "agent_guides": {
     "agents_md": {
@@ -85,7 +85,7 @@
     {
       "name": "ai_workflow",
       "path": "/home/lihan/work/ai_workflow",
-      "status": "dirty",
+      "status": "clean",
       "branch": "main",
       "remote_url": "git@github.com:lihan3238/ai_workflow.git",
       "markers": [

@@ -90,10 +90,10 @@ npm run validate
 npm run build:registry
 ```
 
-The default import is allowlisted: five legacy Hugo posts, four legacy cards,
-one non-default `lihan-cards` skill snapshot, and copied legacy post media under
-`public/legacy/`. It is for workflow testing and review, not a full historical
-migration.
+The default import is allowlisted for AI assets only: four legacy cards and one
+archived `lihan-cards` skill snapshot. Legacy Hugo posts are no longer imported
+into the active blog; the blog intentionally keeps only the current 2026-06-19
+system essays.
 
 Runtime inventory and sync CLI:
 

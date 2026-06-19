@@ -3,20 +3,10 @@ import path from "node:path";
 import process from "node:process";
 import {
   legacyCardToAssetMarkdown,
-  legacyPostToAstroMarkdown,
-  legacySkillToArchiveMarkdown,
-  outputSlugFromLegacyPost
+  legacySkillToArchiveMarkdown
 } from "../src/lib/legacy/import";
 
 const DEFAULT_SOURCE = "/mnt/c/lihan_work/github_repos/lihan3238.github.io";
-
-const LEGACY_POSTS = [
-  "content/post/AI时代人机协作工作流博客V4说明/index.md",
-  "content/post/codex-remote-to-windows-via-wsl-ssh/index.md",
-  "content/post/poem_250904_雨间初登emo山/index.md",
-  "content/post/poem_250925_新晴/index.md",
-  "content/post/随想260529_AI/index.md"
-];
 
 const LEGACY_CARDS = [
   "ai/cards/model-decoupled-project-philosophy.md",
@@ -61,49 +51,10 @@ async function writeFile(target: string, content: string, apply: boolean): Promi
   console.log(`wrote ${target}`);
 }
 
-async function copyLegacyPostAssets(
-  sourceRoot: string,
-  sourceRelativePath: string,
-  slug: string,
-  repoRoot: string,
-  apply: boolean
-): Promise<void> {
-  const sourceDir = path.dirname(path.join(sourceRoot, sourceRelativePath));
-  const targetDir = path.join(repoRoot, "public", "legacy", slug);
-  const entries = await fs.readdir(sourceDir, { withFileTypes: true });
-  const names = entries
-    .filter((entry) => entry.name !== "index.md")
-    .map((entry) => entry.name)
-    .sort();
-
-  for (const name of names) {
-    const source = path.join(sourceDir, name);
-    const target = path.join(targetDir, name);
-    if (!apply) {
-      console.log(`would copy ${target}`);
-      continue;
-    }
-    await fs.mkdir(path.dirname(target), { recursive: true });
-    await fs.cp(source, target, { recursive: true });
-    console.log(`copied ${target}`);
-  }
-}
-
 async function main(): Promise<void> {
   const sourceRoot = argValue("--source", DEFAULT_SOURCE);
   const apply = process.argv.includes("--apply");
   const repoRoot = process.cwd();
-
-  for (const relativePath of LEGACY_POSTS) {
-    const text = await readSource(sourceRoot, relativePath);
-    const slug = outputSlugFromLegacyPost(relativePath, text);
-    await writeFile(
-      path.join(repoRoot, "src", "content", "posts", `${slug}.md`),
-      legacyPostToAstroMarkdown({ sourceRelativePath: relativePath, text }),
-      apply
-    );
-    await copyLegacyPostAssets(sourceRoot, relativePath, slug, repoRoot, apply);
-  }
 
   for (const relativePath of LEGACY_CARDS) {
     const text = await readSource(sourceRoot, relativePath);

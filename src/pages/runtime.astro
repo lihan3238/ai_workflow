@@ -24,11 +24,7 @@ function toolText(label: string, tool: RuntimeToolSnapshot | undefined): string 
 
 <BaseLayout title="Runtime" section="runtime">
   <p class="eyebrow">Runtime inventory</p>
-  <h1 class="page-title">Runtime 显示每台设备和 GitHub 资产基准之间的差异。</h1>
-  <p class="lead">
-    GitHub 仓库里的 `ai/`、`runtime/adapters/` 是最新基准。每台设备通过 SSH 定期扫描；
-    页面负责登记主机、展示状态和资产差异。真正写回设备或 GitHub 仍走 CLI 与 Git。
-  </p>
+  <h1 class="page-title">设备、资产基准和工具链状态。</h1>
 
   <section class="section">
     <div class="grid cols-5">
@@ -58,7 +54,6 @@ function toolText(label: string, tool: RuntimeToolSnapshot | undefined): string 
   <section class="section">
     <div class="section-header">
       <h2>GitHub / repo</h2>
-      <p>网页展示当前构建时看到的 Git remote、分支、工作树状态和资产基准时间。</p>
     </div>
     <div class="grid cols-4">
       <div class="panel">
@@ -85,7 +80,6 @@ function toolText(label: string, tool: RuntimeToolSnapshot | undefined): string 
   <section class="section">
     <div class="section-header">
       <h2>接入设备</h2>
-      <p>输入 `user@ip:port` 并确认后写入扫描配置。免密 SSH、known_hosts 和密钥轮换继续交给系统 SSH。</p>
     </div>
     <div class="onboarding-grid">
       <form class="panel onboarding-panel" id="device-onboard-form">
@@ -114,11 +108,10 @@ function toolText(label: string, tool: RuntimeToolSnapshot | undefined): string 
           autocomplete="off"
         />
         <button class="button primary" id="device-add-button" type="submit">直接添加主机</button>
-        <p class="form-status" id="device-onboard-status">需要先配置免密 SSH；operator 服务可写入配置，静态站只读。</p>
+        <p class="form-status" id="device-onboard-status"></p>
       </form>
       <div class="panel">
         <h3>三分钟扫描</h3>
-        <p>添加主机后，在展示服务器保持扫描进程运行；长期部署交给 systemd timer 或 cron。</p>
         <code class="command">npm run runtime:scan -- --watch --interval-seconds 180</code>
       </div>
     </div>
@@ -146,7 +139,6 @@ function toolText(label: string, tool: RuntimeToolSnapshot | undefined): string 
   <section class="section">
     <div class="section-header">
       <h2>CLI first</h2>
-      <p>所有专业操作都有 CLI 版本。上传本地改动到 GitHub 仍走 Git/gh CLI，不在网页里做。</p>
     </div>
     <div class="grid cols-3">
       <div class="panel">
@@ -208,17 +200,6 @@ function toolText(label: string, tool: RuntimeToolSnapshot | undefined): string 
           </a>
         );
       })}
-    </div>
-  </section>
-
-  <section class="section">
-    <div class="panel">
-      <h3>为什么不直接网页上传到 GitHub</h3>
-      <p>
-        下载/同步 GitHub 最新资产到设备是低风险操作，可以由 CLI 明确目标目录后执行。
-        反向上传本地到 GitHub 会改变团队基准，必须走 `git diff`、`git commit`、`gh pr`
-        或等价 CLI 流程，避免非专业用户误点覆盖。
-      </p>
     </div>
   </section>
 

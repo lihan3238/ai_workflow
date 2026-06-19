@@ -10,11 +10,6 @@ const siteMode = parseSiteMode(import.meta.env.PUBLIC_SITE_MODE);
   <h1 class="page-title">
     {isOperatorMode(siteMode) ? "搜索博客和当前构建可见的 AI 资产。" : "搜索博客和公开 AI 资产说明。"}
   </h1>
-  <p class="lead">
-    {isOperatorMode(siteMode)
-      ? "搜索索引在静态构建时生成，不调用模型、不访问外部服务。"
-      : "搜索索引在静态构建时生成，不调用模型、不访问外部服务。"}
-  </p>
 
   <section class="section">
     <div class="search-panel">

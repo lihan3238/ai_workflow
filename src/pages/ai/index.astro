@@ -17,17 +17,13 @@ const groups = ["card", "prompt", "skill", "profile", "connector"];
 
 <BaseLayout title="AI Assets" section="ai">
   <p class="eyebrow">Registry</p>
-  <h1 class="page-title">AI 资产不是聊天记录，是可验证、可迁移的运行时材料。</h1>
-  <p class="lead">
-    Registry 从 `ai/` 源文件生成。Agent 先看 metadata 决定是否加载正文，再按 verify trio
-    判断是否应用。网页会按构建模式过滤资产；程序员在本地 runtime 中使用完整 registry。
-  </p>
+  <h1 class="page-title">可验证、可迁移的 AI 资产。</h1>
 
   {!isOperatorMode(siteMode) && (
     <section class="section">
       <div class="panel">
         <h2>Private area</h2>
-        <p>当前构建面向家庭只读访问，不展示 operator 资产 registry。程序员请使用私有 operator 构建或本地 Git checkout。</p>
+        <p>当前构建不展示 operator 资产 registry。</p>
       </div>
     </section>
   )}

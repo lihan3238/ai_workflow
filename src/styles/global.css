@@ -316,6 +316,105 @@ a {
   font-size: 0.82rem;
 }
 
+.blog-index-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(320px, 0.7fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.featured-post {
+  display: grid;
+  min-height: 360px;
+  align-content: end;
+  padding: clamp(24px, 4vw, 42px);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background:
+    linear-gradient(135deg, rgba(37, 99, 235, 0.1), transparent 42%),
+    var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.featured-post:hover {
+  border-color: rgba(37, 99, 235, 0.42);
+}
+
+.featured-post time {
+  color: var(--muted);
+  font-size: 0.86rem;
+}
+
+.featured-post h2 {
+  max-width: 760px;
+  margin: 12px 0 0;
+  font-size: clamp(2rem, 4vw, 4rem);
+  line-height: 1.04;
+  letter-spacing: 0;
+}
+
+.featured-post p {
+  max-width: 680px;
+  margin: 16px 0 0;
+  color: var(--muted);
+  font-size: 1.04rem;
+  line-height: 1.65;
+}
+
+.blog-rail,
+.post-aside {
+  display: grid;
+  gap: 14px;
+}
+
+.blog-stat {
+  display: grid;
+  gap: 4px;
+}
+
+.blog-stat span,
+.blog-stat small {
+  color: var(--muted);
+}
+
+.blog-stat strong {
+  font-size: 2.8rem;
+  line-height: 1;
+}
+
+.compact-posts {
+  display: grid;
+  gap: 12px;
+}
+
+.compact-posts a {
+  display: grid;
+  gap: 4px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+
+.compact-posts a:first-of-type {
+  padding-top: 0;
+  border-top: 0;
+}
+
+.compact-posts time {
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.compact-posts span {
+  font-weight: 750;
+  line-height: 1.4;
+}
+
+.post-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
 .search-panel {
   max-width: 860px;
   padding: 22px;
@@ -719,8 +818,42 @@ a {
   white-space: pre-wrap;
 }
 
+.post-detail-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 840px) minmax(280px, 1fr);
+  gap: 18px;
+  align-items: start;
+}
+
+.post-aside {
+  position: sticky;
+  top: 24px;
+}
+
+.meta-list {
+  display: grid;
+  gap: 14px;
+  margin: 0;
+}
+
+.meta-list div {
+  display: grid;
+  gap: 6px;
+}
+
+.meta-list dt {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.meta-list dd {
+  margin: 0;
+}
+
 .prose {
-  max-width: 780px;
+  max-width: none;
   padding: 26px;
   border: 1px solid var(--line);
   border-radius: var(--radius);
@@ -799,8 +932,15 @@ a {
   .tool-grid,
   .onboarding-grid,
   .guide-layout,
+  .blog-index-layout,
+  .post-detail-layout,
+  .post-grid,
   .photo-band {
     grid-template-columns: 1fr;
+  }
+
+  .post-aside {
+    position: static;
   }
 }
 

@@ -126,22 +126,19 @@ Checklist:
 - Keep sync direction baseline-to-device.
 - Keep local-to-GitHub changes in Git/CLI.
 
-## Task 6: Legacy Blog Snapshot
+## Task 6: Legacy AI Asset Snapshot
 
 **Files:**
 
 - `scripts/import-legacy-blog.ts`
 - `src/lib/legacy/import.ts`
-- `src/content/posts/legacy-*.md`
-- `public/legacy/**`
 - `tests/legacy-import.test.ts`
 
 Checklist:
 
-- Import only the allowlisted legacy posts/cards/skill snapshot.
-- Rewrite relative media links to `/legacy/<slug>/...`.
-- Copy legacy media into `public/legacy/<slug>/`.
-- Keep this as a curated migration snapshot, not a full historical import.
+- Import only the allowlisted legacy cards and `lihan-cards` skill reference snapshot.
+- Do not import old Hugo posts into the active blog.
+- Keep this as a curated AI asset migration snapshot, not a full historical import.
 
 ## Task 7: Deployment Documentation
 

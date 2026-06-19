@@ -9,13 +9,48 @@ export async function getStaticPaths() {
 
 const { post } = Astro.props;
 const { Content } = await render(post);
+const posts = (await getCollection("posts", ({ data }) => data.visibility === "public")).sort(
+  (a, b) => b.data.date.valueOf() - a.data.date.valueOf()
+);
+const related = posts.filter((item) => item.id !== post.id).slice(0, 2);
 ---
 
 <BaseLayout title={post.data.title} section="blog" description={post.data.description}>
   <p class="eyebrow">Blog</p>
   <h1 class="page-title">{post.data.title}</h1>
   <p class="lead">{post.data.description}</p>
-  <article class="prose section">
-    <Content />
-  </article>
+
+  <section class="post-detail-layout section">
+    <article class="prose">
+      <Content />
+    </article>
+    <aside class="post-aside" aria-label="Post metadata">
+      <div class="panel">
+        <h2>Meta</h2>
+        <dl class="meta-list">
+          <div>
+            <dt>Date</dt>
+            <dd>{post.data.date.toISOString().slice(0, 10)}</dd>
+          </div>
+          <div>
+            <dt>Tags</dt>
+            <dd>
+              <div class="tag-row">
+                {post.data.tags.map((tag) => <span class="tag">{tag}</span>)}
+              </div>
+            </dd>
+          </div>
+        </dl>
+      </div>
+      <div class="panel compact-posts">
+        <h2>More</h2>
+        {related.map((item) => (
+          <a href={`/blog/${item.id}/`}>
+            <time>{item.data.date.toISOString().slice(0, 10)}</time>
+            <span>{item.data.title}</span>
+          </a>
+        ))}
+      </div>
+    </aside>
+  </section>
 </BaseLayout>

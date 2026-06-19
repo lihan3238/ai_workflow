@@ -395,13 +395,33 @@ async function remoteRuntimeTools(config: RuntimeDeviceConfig): Promise<RuntimeT
 function runtimeToolsScript(): string {
   return [
     runtimePathPrefix(),
+    'tool_version() {',
+    '  id="$1"; bin="$2"; version="";',
+    '  for arg in --version -V version; do',
+    '    version="$("$id" "$arg" 2>/dev/null | head -n 1 | tr "|" " " || true)";',
+    '    [ -n "$version" ] && { printf "%s" "$version"; return 0; }',
+    '  done;',
+    '  if command -v dpkg-query >/dev/null 2>&1; then',
+    '    package="$(dpkg-query -S "$bin" 2>/dev/null | head -n 1 | cut -d: -f1 || true)";',
+    "    [ -n \"$package\" ] && version=\"$(dpkg-query -W -f='${Version}' \"$package\" 2>/dev/null || true)\";",
+    '  fi;',
+    '  if [ -z "$version" ] && command -v rpm >/dev/null 2>&1; then',
+    '    version="$(rpm -qf --qf "%{VERSION}-%{RELEASE}" "$bin" 2>/dev/null || true)";',
+    '    printf "%s" "$version" | grep -Eq "^[0-9]+[.][0-9]+" || version="";',
+    '  fi;',
+    '  if [ -z "$version" ]; then',
+    '    resolved="$(readlink -f "$bin" 2>/dev/null || printf "%s" "$bin")";',
+    '    version="$(printf "%s\\n%s\\n" "$bin" "$resolved" | grep -Eo "v?[0-9]+[.][0-9]+[.][0-9]+" | head -n 1 | sed "s/^v//" || true)";',
+    '  fi;',
+    '  printf "%s" "$version";',
+    '}',
     'tool_line() {',
     '  id="$1"; label="$2"; config_list="$3"; managed="$4"; data_list="${5:-}"; db_version="${6:-}";',
     '  bin="$(command -v "$id" 2>/dev/null || true)";',
     '  installed=0; version="";',
     '  if [ -n "$bin" ]; then',
     '    installed=1;',
-    '    version="$("$id" --version 2>/dev/null | head -n 1 | tr "|" " " || true)";',
+    '    version="$(tool_version "$id" "$bin")";',
     '  fi;',
     '  existing_configs="";',
     '  old_ifs="$IFS"; IFS=",";',
@@ -444,7 +464,7 @@ function runtimeToolsScript(): string {
     'printf "__AWF_TOOLS__\\n"',
     'tool_line claude claude "$HOME/.claude/settings.json,$HOME/.claude.json" "$cc_has_common_claude"',
     'tool_line codex codex "$HOME/.codex/config.toml" "$cc_has_common_codex"',
-    'tool_line cc-switch cc_switch "$HOME/.cc-switch/settings.json" 0 "$HOME/.cc-switch/cc-switch.db" "$cc_db_version"'
+    'tool_line cc-switch cc_switch "$HOME/.cc-switch/settings.json" "" "$HOME/.cc-switch/cc-switch.db" "$cc_db_version"'
   ].join("\n");
 }
 

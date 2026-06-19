@@ -5,15 +5,57 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
 const posts = (await getCollection("posts", ({ data }) => data.visibility === "public")).sort(
   (a, b) => b.data.date.valueOf() - a.data.date.valueOf()
 );
+const featured = posts[0];
+const recent = posts.slice(1);
+const tags = [...new Set(posts.flatMap((post) => post.data.tags))].sort();
 ---
 
 <BaseLayout title="Blog" section="blog">
   <p class="eyebrow">Writing</p>
-  <h1 class="page-title">技术博客和阶段记录保留人的语气，不强行压成 card。</h1>
-  <p class="lead">可复用、可验证的经验进入 AI assets；长解释、复盘和随想留在博文里。</p>
+  <h1 class="page-title">三篇当前系统文章。</h1>
+
+  {featured && (
+    <section class="blog-index-layout section">
+      <a class="featured-post" href={`/blog/${featured.id}/`}>
+        <span class="eyebrow">Featured</span>
+        <time>{featured.data.date.toISOString().slice(0, 10)}</time>
+        <h2>{featured.data.title}</h2>
+        <p>{featured.data.description}</p>
+        <div class="tag-row">
+          {featured.data.tags.map((tag) => <span class="tag">{tag}</span>)}
+        </div>
+      </a>
+
+      <aside class="blog-rail" aria-label="Blog overview">
+        <div class="panel blog-stat">
+          <span>Posts</span>
+          <strong>{posts.length}</strong>
+          <small>{featured.data.date.toISOString().slice(0, 10)}</small>
+        </div>
+        <div class="panel compact-posts">
+          <h2>Recent</h2>
+          {recent.map((post) => (
+            <a href={`/blog/${post.id}/`}>
+              <time>{post.data.date.toISOString().slice(0, 10)}</time>
+              <span>{post.data.title}</span>
+            </a>
+          ))}
+        </div>
+        <div class="panel">
+          <h2>Topics</h2>
+          <div class="tag-row">
+            {tags.map((tag) => <span class="tag">{tag}</span>)}
+          </div>
+        </div>
+      </aside>
+    </section>
+  )}
 
   <section class="section">
-    <div class="grid">
+    <div class="section-header">
+      <h2>All Posts</h2>
+    </div>
+    <div class="post-grid">
       {posts.map((post) => (
         <a class="post-row" href={`/blog/${post.id}/`}>
           <time>{post.data.date.toISOString().slice(0, 10)}</time>

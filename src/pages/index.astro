@@ -16,11 +16,7 @@ const drift = runtime.summary.missing + runtime.summary.changed + runtime.summar
 
 <BaseLayout title="AI Workflow Home" section="home">
   <p class="eyebrow">Personal AI runtime</p>
-  <h1 class="page-title">一个用 GitHub 管理 AI 资产、用 Runtime 对齐多设备的工作台。</h1>
-  <p class="lead">
-    博客只是窗口。核心是 Git 管理的 cards、prompts、skills、profiles、AGENTS/CLAUDE
-    指南和设备快照。每台设备差多少、多多少、缺什么，都在 Runtime 里看。
-  </p>
+  <h1 class="page-title">Git 管资产，Runtime 管设备。</h1>
 
   <section class="section">
     <div class="grid cols-4">
@@ -46,17 +42,16 @@ const drift = runtime.summary.missing + runtime.summary.changed + runtime.summar
   <section class="section">
     <div class="section-header">
       <h2>Operator paths</h2>
-      <p>专业操作都保留 CLI：网页负责观察与确认，写入和上传仍由 Git/CLI 控制。</p>
     </div>
     <div class="grid cols-2">
       <a class="panel" href="/runtime">
         <h3>Device sync</h3>
-        <p>查看每台设备的用户级 AGENTS.md、CLAUDE.md、skills、项目列表和资产差异。</p>
+        <p>设备指南、skills、项目列表和资产差异。</p>
         <code class="command">npm run runtime:diff -- --device runtime/devices/father-linux.json</code>
       </a>
       <a class="panel" href="/ai/">
         <h3>Asset registry</h3>
-        <p>查看当前 GitHub/repo 基准中的 AI assets。项目列表不再作为 asset kind 存在。</p>
+        <p>当前 GitHub/repo 基准中的 AI assets。</p>
         <code class="command">npm run validate && npm run build:registry</code>
       </a>
     </div>

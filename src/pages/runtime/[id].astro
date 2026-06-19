@@ -25,10 +25,10 @@ const agentsGuide = comparison.device.agent_guides.agents_md;
 const claudeGuide = comparison.device.agent_guides.claude_md;
 const guideVerification = comparison.device.guide_verification;
 const runtimeTools = [
-  ["Claude Code", comparison.device.tools?.claude],
-  ["Codex", comparison.device.tools?.codex],
-  ["cc-switch", comparison.device.tools?.cc_switch]
-] as Array<[string, RuntimeToolSnapshot | undefined]>;
+  ["Claude Code", comparison.device.tools?.claude, true],
+  ["Codex", comparison.device.tools?.codex, true],
+  ["cc-switch", comparison.device.tools?.cc_switch, false]
+] as Array<[string, RuntimeToolSnapshot | undefined, boolean]>;
 
 function pathList(paths: string[] | undefined): string {
   return paths && paths.length > 0 ? paths.join(", ") : "未发现";
@@ -38,11 +38,7 @@ function pathList(paths: string[] | undefined): string {
 <BaseLayout title={comparison.device.label} section="runtime">
   <p class="eyebrow">Device detail</p>
   <h1 class="page-title">{comparison.device.label}</h1>
-  <p class="lead">
-    {runtimeDeviceIdentityLine(comparison.device)}。{runtimeDeviceStatusLine(comparison.device)}。
-    这里显示这台设备的用户级指南、skills、
-    项目状态和 GitHub/repo 基准差异；写入仍回到目标设备终端执行 CLI。
-  </p>
+  <p class="lead">{runtimeDeviceIdentityLine(comparison.device)}。{runtimeDeviceStatusLine(comparison.device)}。</p>
   <p class="lead">{runtimeDeviceInventoryLine(comparison.device)}</p>
   {comparison.device.inventory_note && <p class="lead">{comparison.device.inventory_note}</p>}
 
@@ -105,19 +101,16 @@ function pathList(paths: string[] | undefined): string {
   <section class="section">
     <div class="section-header">
       <h2>Toolchain</h2>
-      <p>通过 SSH 采集命令路径、版本和配置文件位置；不读取 provider secret 或配置正文。</p>
     </div>
     <div class="tool-grid">
-      {runtimeTools.map(([label, tool]) => (
+      {runtimeTools.map(([label, tool, showsManagedState]) => (
         <div class="panel tool-panel">
           <div class="asset-meta">
             <span class:list={["tool-badge", tool?.installed ? "installed" : "missing"]}>
               {tool?.installed ? "installed" : "missing"}
             </span>
-            {tool?.managed_by_cc_switch !== undefined && (
-              <span class:list={["tool-badge", tool.managed_by_cc_switch ? "installed" : "neutral"]}>
-                {tool.managed_by_cc_switch ? "cc-switch managed" : "not managed"}
-              </span>
+            {showsManagedState && tool?.managed_by_cc_switch && (
+              <span class="tool-badge installed">cc-switch managed</span>
             )}
           </div>
           <h3>{label}</h3>
@@ -178,7 +171,6 @@ function pathList(paths: string[] | undefined): string {
   <section class="section">
     <div class="section-header">
       <h2>Diff</h2>
-      <p>网页对 private prompt/profile 路径做 redaction；完整路径和内容请用 CLI diff。</p>
     </div>
     <div class="diff-panel open-panel">
       <pre>{diffText || "No asset drift."}</pre>

@@ -92,13 +92,13 @@ npm run import:legacy
 npm run import:legacy -- --apply
 ```
 
-当前 allowlist 迁移：
+当前 allowlist 迁移只保留 AI 资产层：
 
-- 5 篇旧 Hugo 博文，包括 AI 反思和美景/诗意类文章；
 - 4 张旧 cards；
-- 1 个 `lihan-cards` legacy skill 快照；
-- 旧博文相对图片/附件复制到 `public/legacy/<slug>/`；
-- Markdown 图片链接会重写到 `/legacy/<slug>/...`。
+- 1 个 `lihan-cards` legacy skill 参考快照。
+
+旧 Hugo 博文不再导入到当前博客，也不再复制 `public/legacy/<slug>/` 媒体。当前博客只保留
+2026-06-19 的三篇系统文章；旧博客迁移能力只用于测试和归档参考。
 
 迁移后运行：
 

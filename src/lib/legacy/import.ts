@@ -96,69 +96,6 @@ function uniqueTags(tags: string[], extra: string): string[] {
   return normalized.length > 0 ? normalized : [extra];
 }
 
-function ymd(value: unknown): string {
-  if (value instanceof Date) {
-    return value.toISOString().slice(0, 10);
-  }
-  const text = String(value ?? "").trim();
-  const match = text.match(/\d{4}-\d{2}-\d{2}/);
-  if (!match) {
-    throw new Error(`legacy date must contain YYYY-MM-DD, got '${text}'`);
-  }
-  return match[0];
-}
-
-function boolValue(value: unknown): boolean {
-  return value === true || value === "true";
-}
-
-function sourceDirName(sourceRelativePath: string): string {
-  const parts = sourceRelativePath.split(/[\\/]/).filter(Boolean);
-  return parts.at(-2) ?? parts.at(-1) ?? "legacy";
-}
-
-function normalizeLegacyMarkdownBody(body: string): string {
-  return body.replace(/^```sshconfig\b/gm, "```text");
-}
-
-function rewriteRelativeAssetLinks(body: string, slug: string): string {
-  return body.replace(/(!\[[^\]]*\]\()((?!https?:\/\/|\/|#)[^)]+)(\))/g, (_match, prefix, target, suffix) => {
-    return `${prefix}/legacy/${slug}/${String(target).trim()}${suffix}`;
-  });
-}
-
-export function outputSlugFromLegacyPost(sourceRelativePath: string, text: string): string {
-  const { frontmatter } = parseMarkdown(text);
-  const slugSource = optionalString(frontmatter, "slug") ?? sourceDirName(sourceRelativePath);
-  const slug = kebab(slugSource);
-  if (!slug) {
-    throw new Error(`could not derive slug for ${sourceRelativePath}`);
-  }
-  return `legacy-${slug}`;
-}
-
-export function legacyPostToAstroMarkdown(input: LegacyInput): string {
-  const { frontmatter, body } = parseMarkdown(input.text);
-  const slug = outputSlugFromLegacyPost(input.sourceRelativePath, input.text);
-  const title = requireString(frontmatter, "title");
-  const description = optionalString(frontmatter, "description") ?? title;
-  const visibility =
-    boolValue(frontmatter.hidden) || boolValue(frontmatter.draft) || frontmatter.password
-      ? "private"
-      : "public";
-
-  const nextFrontmatter = {
-    title,
-    description,
-    date: ymd(frontmatter.date),
-    tags: uniqueTags(stringList(frontmatter.tags), "legacy-blog"),
-    visibility
-  };
-
-  const nextBody = rewriteRelativeAssetLinks(normalizeLegacyMarkdownBody(body), slug);
-  return `${yamlBlock(nextFrontmatter)}> 迁移自旧 Hugo 博客：\`${input.sourceRelativePath}\`。这是迁移快照，用于验证新工作流系统的内容链路。\n\n${nextBody.trimEnd()}\n`;
-}
-
 function legacyDomain(value: unknown): string {
   switch (value) {
     case "principle":

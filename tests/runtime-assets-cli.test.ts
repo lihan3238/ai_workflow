@@ -384,6 +384,88 @@ describe("runtime asset CLI", () => {
     });
   });
 
+  it("falls back to package metadata when cc-switch prints no version", async () => {
+    const root = await makeRuntimeRoot();
+    const home = path.join(root, "home");
+    const bin = path.join(home, ".local", "bin");
+    await fs.mkdir(path.join(home, ".cc-switch"), { recursive: true });
+    await fs.mkdir(bin, { recursive: true });
+    await fs.writeFile(path.join(home, ".cc-switch/settings.json"), "{}\n", "utf8");
+    await fs.writeFile(
+      path.join(bin, "cc-switch"),
+      ["#!/usr/bin/env sh", "exit 0"].join("\n"),
+      "utf8"
+    );
+    await fs.writeFile(
+      path.join(bin, "dpkg-query"),
+      [
+        "#!/usr/bin/env sh",
+        "if [ \"$1\" = \"-S\" ]; then printf 'cc-switch: %s\\n' \"$2\"; exit 0; fi",
+        "if [ \"$1\" = \"-W\" ]; then printf '3.16.3'; exit 0; fi",
+        "exit 1"
+      ].join("\n"),
+      "utf8"
+    );
+    await fs.chmod(path.join(bin, "cc-switch"), 0o755);
+    await fs.chmod(path.join(bin, "dpkg-query"), 0o755);
+
+    await execRuntime(
+      root,
+      ["inspect", "--device", "local", "--label", "Local", "--out", "runtime/devices/local.json"],
+      { HOME: home, PATH: `${bin}:/usr/bin:/bin` }
+    );
+
+    const snapshot = JSON.parse(
+      await fs.readFile(path.join(root, "runtime/devices/local.json"), "utf8")
+    );
+    expect(snapshot.tools.cc_switch).toMatchObject({
+      installed: true,
+      binary_path: path.join(bin, "cc-switch"),
+      version: "3.16.3",
+      config_paths: [path.join(home, ".cc-switch/settings.json")]
+    });
+  });
+
+  it("falls back to versioned cc-switch install paths without package metadata", async () => {
+    const root = await makeRuntimeRoot();
+    const home = path.join(root, "home");
+    const bin = path.join(home, ".local", "bin");
+    const versionedDir = path.join(home, ".local", "opt", "cc-switch-3.16.3", "usr", "bin");
+    await fs.mkdir(path.join(home, ".cc-switch"), { recursive: true });
+    await fs.mkdir(bin, { recursive: true });
+    await fs.mkdir(versionedDir, { recursive: true });
+    const versionedBinary = path.join(versionedDir, "cc-switch");
+    await fs.writeFile(path.join(home, ".cc-switch/settings.json"), "{}\n", "utf8");
+    await fs.writeFile(versionedBinary, ["#!/usr/bin/env sh", "exit 0"].join("\n"), "utf8");
+    await fs.writeFile(
+      path.join(bin, "rpm"),
+      [
+        "#!/usr/bin/env sh",
+        "if [ \"$1\" = \"-qf\" ]; then printf '文件 %s 不属于任何软件包\\n' \"$4\"; exit 1; fi",
+        "exit 1"
+      ].join("\n"),
+      "utf8"
+    );
+    await fs.chmod(versionedBinary, 0o755);
+    await fs.chmod(path.join(bin, "rpm"), 0o755);
+    await fs.symlink(versionedBinary, path.join(bin, "cc-switch"));
+
+    await execRuntime(
+      root,
+      ["inspect", "--device", "local", "--label", "Local", "--out", "runtime/devices/local.json"],
+      { HOME: home, PATH: `${bin}:/usr/bin:/bin` }
+    );
+
+    const snapshot = JSON.parse(
+      await fs.readFile(path.join(root, "runtime/devices/local.json"), "utf8")
+    );
+    expect(snapshot.tools.cc_switch).toMatchObject({
+      installed: true,
+      binary_path: path.join(bin, "cc-switch"),
+      version: "3.16.3"
+    });
+  });
+
   it("detects workflow projects from existing markers over SSH", async () => {
     const root = await makeRuntimeRoot();
     const bin = path.join(root, "bin");
