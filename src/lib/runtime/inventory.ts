@@ -1,3 +1,8 @@
+import { diffLines } from "diff";
+import type { SshTarget } from "./ssh";
+export { defaultRemoteRootForSshTarget, parseSshTarget } from "./ssh";
+export type { SshTarget } from "./ssh";
+
 export type PresenceStatus = "present" | "missing" | "changed" | "unknown";
 export type SkillStatus = "present" | "missing" | "changed" | "unknown";
 export type ProjectStatus = "clean" | "dirty" | "unknown";
@@ -94,13 +99,6 @@ export interface AgentGuideVerification {
   status: GuideVerificationStatus;
   mode: GuideVerificationMode;
   detail: string;
-}
-
-export interface SshTarget {
-  user: string;
-  host: string;
-  port: number;
-  target: string;
 }
 
 export interface RuntimeDeviceConfig {
@@ -321,27 +319,6 @@ export function runtimeGuideVerificationLine(
   return verification.detail;
 }
 
-export function parseSshTarget(value: string): SshTarget {
-  const match = /^([^@\s]+)@([^:\s]+)(?::(\d+))?$/.exec(value.trim());
-  if (!match) {
-    throw new Error("SSH target must look like user@ip:port");
-  }
-  const port = match[3] ? Number(match[3]) : 22;
-  if (!Number.isInteger(port) || port < 1 || port > 65535) {
-    throw new Error("SSH target port must be between 1 and 65535");
-  }
-  return {
-    user: match[1],
-    host: match[2],
-    port,
-    target: `${match[1]}@${match[2]}`
-  };
-}
-
-export function defaultRemoteRootForSshTarget(ssh: Pick<SshTarget, "user">): string {
-  return ssh.user === "root" ? "/root/work/ai_workflow" : `/home/${ssh.user}/work/ai_workflow`;
-}
-
 export function isSafeRuntimeDeviceId(id: string): boolean {
   return /^[a-z0-9](?:[a-z0-9-]{0,62}[a-z0-9])?$/.test(id);
 }
@@ -412,38 +389,14 @@ function lineDiff(
   beforeLines: string[],
   afterLines: string[]
 ): Array<{ prefix: " " | "-" | "+"; line: string }> {
-  const rowCount = beforeLines.length;
-  const columnCount = afterLines.length;
-  const lengths = Array.from({ length: rowCount + 1 }, () =>
-    Array<number>(columnCount + 1).fill(0)
-  );
-
-  for (let row = rowCount - 1; row >= 0; row -= 1) {
-    for (let column = columnCount - 1; column >= 0; column -= 1) {
-      lengths[row][column] =
-        beforeLines[row] === afterLines[column]
-          ? lengths[row + 1][column + 1] + 1
-          : Math.max(lengths[row + 1][column], lengths[row][column + 1]);
-    }
-  }
-
+  const beforeText = `${beforeLines.join("\n")}${beforeLines.length > 0 ? "\n" : ""}`;
+  const afterText = `${afterLines.join("\n")}${afterLines.length > 0 ? "\n" : ""}`;
   const diff: Array<{ prefix: " " | "-" | "+"; line: string }> = [];
-  let row = 0;
-  let column = 0;
-  while (row < rowCount || column < columnCount) {
-    if (row < rowCount && column < columnCount && beforeLines[row] === afterLines[column]) {
-      diff.push({ prefix: " ", line: beforeLines[row] });
-      row += 1;
-      column += 1;
-    } else if (
-      column < columnCount &&
-      (row === rowCount || lengths[row][column + 1] > lengths[row + 1][column])
-    ) {
-      diff.push({ prefix: "+", line: afterLines[column] });
-      column += 1;
-    } else if (row < rowCount) {
-      diff.push({ prefix: "-", line: beforeLines[row] });
-      row += 1;
+
+  for (const part of diffLines(beforeText, afterText, { newlineIsToken: false })) {
+    const prefix = part.added ? "+" : part.removed ? "-" : " ";
+    for (const line of linesForDiff(part.value)) {
+      diff.push({ prefix, line });
     }
   }
 

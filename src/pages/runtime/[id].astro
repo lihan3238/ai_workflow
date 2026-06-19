@@ -202,43 +202,11 @@ function pathList(paths: string[] | undefined): string {
   </dialog>
 
   <script>
-    const deleteButton = document.getElementById("device-delete-button");
-    const confirmDialog = document.getElementById("runtime-confirm-dialog");
-    const confirmTitle = document.getElementById("runtime-confirm-title");
-    const confirmMessage = document.getElementById("runtime-confirm-message");
+    import { wireRuntimeDeviceDeleteButtons } from "../../lib/runtime/client";
 
-    function askConfirmation(title, message) {
-      return new Promise((resolve) => {
-        if (!(confirmDialog instanceof HTMLDialogElement)) {
-          resolve(false);
-          return;
-        }
-        if (confirmTitle) confirmTitle.textContent = title;
-        if (confirmMessage) confirmMessage.textContent = message;
-        const handleClose = () => {
-          confirmDialog.removeEventListener("close", handleClose);
-          resolve(confirmDialog.returnValue === "confirm");
-        };
-        confirmDialog.addEventListener("close", handleClose);
-        confirmDialog.showModal();
-      });
-    }
-
-    deleteButton?.addEventListener("click", async () => {
-      const id = deleteButton.getAttribute("data-device-id");
-      if (!id) return;
-      const confirmed = await askConfirmation("删除主机", `${id} 的扫描配置和对应快照会被移除。`);
-      if (!confirmed) return;
-      try {
-        const response = await fetch(`/api/runtime/devices/${encodeURIComponent(id)}`, {
-          method: "DELETE"
-        });
-        if (!response.ok) throw new Error(await response.text());
-        window.location.href = "/runtime/";
-      } catch (error) {
-        const message = `当前部署是只读静态站或 API 不可用，请手动编辑 runtime/devices/config.json。${error instanceof Error ? ` ${error.message}` : ""}`;
-        await askConfirmation("删除失败", message);
-      }
+    wireRuntimeDeviceDeleteButtons({
+      buttonSelector: "#device-delete-button",
+      redirectTo: "/runtime/"
     });
   </script>
 </BaseLayout>

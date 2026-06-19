@@ -80,6 +80,7 @@ function toolText(label: string, tool: RuntimeToolSnapshot | undefined): string 
   <section class="section">
     <div class="section-header">
       <h2>接入设备</h2>
+      <p>浏览器只写扫描配置；真实资产采集和同步仍由 CLI/API 校验。</p>
     </div>
     <div class="onboarding-grid">
       <form class="panel onboarding-panel" id="device-onboard-form">
@@ -112,6 +113,7 @@ function toolText(label: string, tool: RuntimeToolSnapshot | undefined): string 
       </form>
       <div class="panel">
         <h3>三分钟扫描</h3>
+        <p>注册设备后，在部署主机上运行 watch 扫描刷新本地 snapshot。</p>
         <code class="command">npm run runtime:scan -- --watch --interval-seconds 180</code>
       </div>
     </div>
@@ -215,122 +217,14 @@ function toolText(label: string, tool: RuntimeToolSnapshot | undefined): string 
   </dialog>
 
   <script>
-  const form = document.getElementById("device-onboard-form");
-  const targetInput = document.getElementById("ssh-target");
-  const labelInput = document.getElementById("device-label");
-  const remoteRootInput = document.getElementById("remote-root");
-  const onboardStatus = document.getElementById("device-onboard-status");
-  const confirmDialog = document.getElementById("runtime-confirm-dialog");
-  const confirmTitle = document.getElementById("runtime-confirm-title");
-  const confirmMessage = document.getElementById("runtime-confirm-message");
-  let remoteRootEdited = false;
+  import {
+    wireRuntimeDeviceDeleteButtons,
+    wireRuntimeDeviceOnboarding
+  } from "../lib/runtime/client";
 
-  function askConfirmation(title, message) {
-    return new Promise((resolve) => {
-      if (!(confirmDialog instanceof HTMLDialogElement)) {
-        resolve(false);
-        return;
-      }
-      if (confirmTitle) confirmTitle.textContent = title;
-      if (confirmMessage) confirmMessage.textContent = message;
-      const handleClose = () => {
-        confirmDialog.removeEventListener("close", handleClose);
-        resolve(confirmDialog.returnValue === "confirm");
-      };
-      confirmDialog.addEventListener("close", handleClose);
-      confirmDialog.showModal();
-    });
-  }
-
-  function slug(value) {
-    return value.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "device";
-  }
-
-  function parseTarget(value) {
-    const at = value.indexOf("@");
-    const colon = value.lastIndexOf(":");
-    if (at <= 0 || colon <= at + 1) return undefined;
-    const user = value.slice(0, at);
-    const host = value.slice(at + 1, colon);
-    const port = value.slice(colon + 1) || "22";
-    return { user, host, port, target: `${user}@${host}` };
-  }
-
-  function defaultRemoteRoot(user) {
-    return user === "root" ? "/root/work/ai_workflow" : `/home/${user}/work/ai_workflow`;
-  }
-
-  function syncRemoteRootDefault() {
-    if (!(targetInput instanceof HTMLInputElement) || !(remoteRootInput instanceof HTMLInputElement)) return;
-    if (remoteRootEdited) return;
-    const parsed = parseTarget(targetInput.value.trim());
-    if (parsed) remoteRootInput.value = defaultRemoteRoot(parsed.user);
-  }
-
-  function quote(value) {
-    return `"${value.replaceAll('"', '\\"')}"`;
-  }
-
-  function renderCommands() {
-    if (!targetInput || !labelInput) return undefined;
-    const parsed = parseTarget(targetInput.value.trim());
-    const label = labelInput.value.trim() || "New device";
-    if (!parsed) {
-      if (onboardStatus) onboardStatus.textContent = "SSH target 格式必须是 user@ip:port。";
-      return undefined;
-    }
-    const id = slug(label);
-    const remoteRoot = remoteRootInput instanceof HTMLInputElement ? remoteRootInput.value.trim() : "";
-    return { id, label, ssh: `${parsed.target}:${parsed.port}`, remote_root: remoteRoot || undefined };
-  }
-
-  remoteRootInput?.addEventListener("input", () => {
-    remoteRootEdited = true;
+  wireRuntimeDeviceOnboarding();
+  wireRuntimeDeviceDeleteButtons({
+    statusElement: document.getElementById("device-onboard-status")
   });
-
-  targetInput?.addEventListener("input", syncRemoteRootDefault);
-  syncRemoteRootDefault();
-
-  form?.addEventListener("submit", async (event) => {
-    event.preventDefault();
-    const payload = renderCommands();
-    if (!payload || !onboardStatus) return;
-    const confirmed = await askConfirmation("添加主机", `${payload.label} (${payload.ssh})`);
-    if (!confirmed) return;
-    onboardStatus.textContent = "正在写入 runtime/devices/config.json...";
-    try {
-      const response = await fetch("/api/runtime/devices", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify(payload)
-      });
-      if (!response.ok) throw new Error(await response.text());
-      onboardStatus.textContent = "已添加主机并重建 operator 页面，正在刷新。";
-      window.location.reload();
-    } catch (error) {
-      const remoteRootArgs = payload.remote_root ? ` --remote-root ${quote(payload.remote_root)}` : "";
-      onboardStatus.textContent = `当前部署是只读静态站或 API 不可用，请执行: npm run runtime:device:add -- --id ${payload.id} --label ${quote(payload.label)} --ssh ${payload.ssh}${remoteRootArgs}`;
-    }
-  });
-
-  for (const button of document.querySelectorAll(".device-delete-button")) {
-    button.addEventListener("click", async () => {
-      const id = button.getAttribute("data-device-id");
-      if (!id) return;
-      const confirmed = await askConfirmation("删除主机", `${id} 的扫描配置和对应快照会被移除。`);
-      if (!confirmed) return;
-      try {
-        const response = await fetch(`/api/runtime/devices/${encodeURIComponent(id)}`, {
-          method: "DELETE"
-        });
-        if (!response.ok) throw new Error(await response.text());
-        window.location.reload();
-      } catch (error) {
-        if (onboardStatus) {
-          onboardStatus.textContent = `当前部署是只读静态站或 API 不可用，请手动编辑 runtime/devices/config.json。${error instanceof Error ? ` ${error.message}` : ""}`;
-        }
-      }
-    });
-  }
   </script>
 </BaseLayout>

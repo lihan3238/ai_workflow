@@ -6,6 +6,7 @@ import {
   searchEntriesForSiteMode,
   type SearchEntry
 } from "../src/lib/search-index";
+import { rankSearchEntries } from "../src/lib/search/query";
 
 function asset(id: string, visibility: "public" | "team" | "private" | "local-only") {
   return normalizeAsset(
@@ -88,6 +89,34 @@ describe("search index", () => {
     expect(searchEntriesForSiteMode("operator", content, assets).map((entry) => entry.id)).toEqual([
       "blog:welcome",
       "asset:team-card"
+    ]);
+  });
+
+  it("ranks search entries with title and tag relevance", () => {
+    const entries: SearchEntry[] = [
+      {
+        id: "blog:runtime-note",
+        title: "Runtime notes",
+        description: "Mentions Codex once.",
+        href: "/blog/runtime-note/",
+        kind: "blog",
+        tags: ["runtime"],
+        text: "Runtime notes mention Codex."
+      },
+      {
+        id: "asset:codex-default",
+        title: "Codex default prompt",
+        description: "Default prompt pack.",
+        href: "/ai/",
+        kind: "asset",
+        tags: ["codex", "prompt"],
+        text: "Codex prompt pack for agent defaults."
+      }
+    ];
+
+    expect(rankSearchEntries("codex prompt", entries).map((entry) => entry.id)).toEqual([
+      "asset:codex-default",
+      "blog:runtime-note"
     ]);
   });
 });

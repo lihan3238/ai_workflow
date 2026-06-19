@@ -10,6 +10,7 @@ const siteMode = parseSiteMode(import.meta.env.PUBLIC_SITE_MODE);
   <h1 class="page-title">
     {isOperatorMode(siteMode) ? "搜索博客和当前构建可见的 AI 资产。" : "搜索博客和公开 AI 资产说明。"}
   </h1>
+  <p class="lead">静态索引在构建时生成，浏览器端只做本地 fuzzy search，不触发远程查询。</p>
 
   <section class="section">
     <div class="search-panel">
@@ -29,64 +30,52 @@ const siteMode = parseSiteMode(import.meta.env.PUBLIC_SITE_MODE);
 </BaseLayout>
 
 <script>
+  import { rankSearchEntries } from "../lib/search/query";
+  import type { SearchEntry } from "../lib/search-index";
+
   const input = document.querySelector("[data-search-input]");
   const status = document.querySelector("[data-search-status]");
   const results = document.querySelector("[data-search-results]");
 
-  const kindLabels = {
+  const kindLabels: Record<string, string> = {
     blog: "Blog",
     asset: "AI Asset"
   };
 
-  let entries = [];
+  let entries: SearchEntry[] = [];
 
-  function normalize(value) {
-    return String(value || "").toLocaleLowerCase();
+  function textElement(tagName: "span" | "strong" | "p" | "small", text: string) {
+    const element = document.createElement(tagName);
+    element.textContent = text;
+    return element;
   }
 
-  function scoreEntry(entry, query) {
-    const q = normalize(query).trim();
-    if (!q) return 0;
-    const title = normalize(entry.title);
-    const description = normalize(entry.description);
-    const text = normalize(entry.text);
-    let score = 0;
-    if (title.includes(q)) score += 8;
-    if (description.includes(q)) score += 4;
-    if (text.includes(q)) score += 2;
-    for (const term of q.split(/\s+/).filter(Boolean)) {
-      if (title.includes(term)) score += 3;
-      if (text.includes(term)) score += 1;
-    }
-    return score;
+  function resultElement(entry: SearchEntry): HTMLAnchorElement {
+    const link = document.createElement("a");
+    link.className = "search-result";
+    link.href = entry.href;
+    link.append(
+      textElement("span", kindLabels[entry.kind] || entry.kind),
+      textElement("strong", entry.title),
+      textElement("p", entry.description),
+      textElement("small", entry.tags.slice(0, 5).join(" / "))
+    );
+    return link;
   }
 
   function render(query) {
     if (!(results instanceof HTMLElement) || !(status instanceof HTMLElement)) return;
     const q = query.trim();
     if (!q) {
-      results.innerHTML = "";
+      results.replaceChildren();
       status.textContent = `已加载 ${entries.length} 条可搜索内容。`;
       return;
     }
 
-    const matches = entries
-      .map((entry) => ({ entry, score: scoreEntry(entry, q) }))
-      .filter((item) => item.score > 0)
-      .sort((a, b) => b.score - a.score || a.entry.title.localeCompare(b.entry.title))
-      .slice(0, 24);
+    const matches = rankSearchEntries(q, entries);
 
     status.textContent = matches.length === 0 ? "没有找到匹配内容。" : `找到 ${matches.length} 条匹配内容。`;
-    results.innerHTML = matches
-      .map(({ entry }) => `
-        <a class="search-result" href="${entry.href}">
-          <span>${kindLabels[entry.kind] || entry.kind}</span>
-          <strong>${entry.title}</strong>
-          <p>${entry.description}</p>
-          <small>${entry.tags.slice(0, 5).join(" / ")}</small>
-        </a>
-      `)
-      .join("");
+    results.replaceChildren(...matches.map(resultElement));
   }
 
   function syncUrl(query) {

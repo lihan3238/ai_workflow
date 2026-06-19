@@ -129,6 +129,11 @@ describe("runtime inventory", () => {
     const comparison = compareDeviceToBaseline(device, baseline);
     const diff = unifiedDiffForAsset(comparison.changed[0]);
 
+    expect(diff.split("\n").slice(0, 3)).toEqual([
+      "--- father-linux:ai/cards/model.md",
+      "+++ github:ai/cards/model.md",
+      "@@"
+    ]);
     expect(diff).toContain("--- father-linux:ai/cards/model.md");
     expect(diff).toContain("+++ github:ai/cards/model.md");
     expect(diff).toContain("-summary: old");

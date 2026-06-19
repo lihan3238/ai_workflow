@@ -117,6 +117,9 @@ The static operator build is read-only. `npm run operator:serve` starts a thin
 LAN-local API that lets the browser add/delete hosts by editing
 `runtime/devices/config.json`; keep access control at the firewall/reverse-proxy
 layer.
+Runtime browser helpers only improve operator UX for form parsing,
+confirmation dialogs, and static-site fallback commands. The CLI/API remains
+authoritative for validation and writes.
 `runtime/devices/config.json` and `runtime/devices/*.json` are local runtime
 state and are ignored by Git because they contain real hostnames, IPs, usernames,
 paths, last-seen timestamps, and tool snapshots. Keep them on the deployment
@@ -129,12 +132,18 @@ and local AI toolchain state. Runtime cards show red/green install badges for
 Claude Code, Codex, and cc-switch; device detail pages show versions, binary
 paths, config file paths, cc-switch DB path, and DB `user_version`. The
 collector reads metadata only, not provider secrets or config bodies.
+Changed public/team runtime assets are rendered with the `diff` package while
+private/local prompt and profile paths stay redacted from static HTML.
 Projects are detected from existing workflow markers rather than a new project
 database: `AGENTS.md`, `ai/cards`, `ai/skills`, `runtime/adapters`, or an
 explicit `.workflow-home.json` marker. `.agents/` is recorded when present, but
 it does not opt in a project by itself. The scanner checks the configured
 `remote_root`, its parent, and common workspace folders such as `~/work`,
 `~/projects`, and `~/github_repos`.
+
+Site search remains static: Astro builds `/search-index.json` from visible blog
+posts and AI assets, and the browser ranks that local payload with Fuse.js. It
+does not call a remote search service or expose private/local assets.
 
 The full legacy `lihan_cards` card set from `lihan3238.github.io` is copied and
 schema-converted under `ai/cards/imported-lihan-cards/`. The old
