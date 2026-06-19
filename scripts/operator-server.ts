@@ -29,6 +29,17 @@ async function pathExists(filePath: string): Promise<boolean> {
   }
 }
 
+async function fileKind(filePath: string): Promise<"file" | "directory" | "missing"> {
+  try {
+    const stat = await fs.stat(filePath);
+    if (stat.isFile()) return "file";
+    if (stat.isDirectory()) return "directory";
+    return "missing";
+  } catch {
+    return "missing";
+  }
+}
+
 async function readJsonBody<T>(request: IncomingMessage): Promise<T> {
   const chunks: Buffer[] = [];
   for await (const chunk of request) {
@@ -132,11 +143,13 @@ async function serveStatic(response: ServerResponse, url: URL): Promise<void> {
     sendText(response, 403, "forbidden");
     return;
   }
-  const filePath = (await pathExists(candidate)) ? candidate : path.join(candidate, "index.html");
-  if (!(await pathExists(filePath))) {
+  const candidateKind = await fileKind(candidate);
+  const filePath = candidateKind === "file" ? candidate : path.join(candidate, "index.html");
+  if ((await fileKind(filePath)) !== "file") {
     sendText(response, 404, "not found");
     return;
   }
+  const content = await fs.readFile(filePath);
   const extension = path.extname(filePath);
   const contentType =
     extension === ".html"
@@ -149,7 +162,7 @@ async function serveStatic(response: ServerResponse, url: URL): Promise<void> {
             ? "application/json; charset=utf-8"
             : "application/octet-stream";
   response.writeHead(200, { "content-type": contentType });
-  response.end(await fs.readFile(filePath));
+  response.end(content);
 }
 
 const server = createServer(async (request, response) => {
@@ -158,6 +171,10 @@ const server = createServer(async (request, response) => {
     if (await handleApi(request, response, url)) return;
     await serveStatic(response, url);
   } catch (error) {
+    if (response.headersSent) {
+      response.destroy(error instanceof Error ? error : undefined);
+      return;
+    }
     sendJson(response, 500, { error: error instanceof Error ? error.message : String(error) });
   }
 });

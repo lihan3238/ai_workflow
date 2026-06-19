@@ -7,10 +7,11 @@ const siteMode = parseSiteMode(import.meta.env.PUBLIC_SITE_MODE);
 
 <BaseLayout title="Search" section="search">
   <p class="eyebrow">Local index</p>
-  <h1 class="page-title">
+  <h1 class="page-title">Search</h1>
+  <p class="lead">
     {isOperatorMode(siteMode) ? "搜索博客和当前构建可见的 AI 资产。" : "搜索博客和公开 AI 资产说明。"}
-  </h1>
-  <p class="lead">静态索引在构建时生成，浏览器端只做本地 fuzzy search，不触发远程查询。</p>
+    静态索引在构建时生成，浏览器端只做本地 fuzzy search，不触发远程查询。
+  </p>
 
   <section class="section">
     <div class="search-panel">

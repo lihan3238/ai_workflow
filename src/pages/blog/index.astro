@@ -12,7 +12,8 @@ const tags = [...new Set(posts.flatMap((post) => post.data.tags))].sort();
 
 <BaseLayout title="Blog" section="blog">
   <p class="eyebrow">Writing</p>
-  <h1 class="page-title">三篇当前系统文章。</h1>
+  <h1 class="page-title">Blog</h1>
+  <p class="lead">当前系统文章。</p>
 
   {featured && (
     <section class="blog-index-layout section">

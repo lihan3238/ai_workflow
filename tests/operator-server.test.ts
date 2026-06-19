@@ -15,7 +15,9 @@ async function makeRoot(): Promise<string> {
   tempRoots.push(root);
   await fs.mkdir(path.join(root, "runtime/devices"), { recursive: true });
   await fs.mkdir(path.join(root, "dist-operator"), { recursive: true });
+  await fs.mkdir(path.join(root, "dist-operator/runtime"), { recursive: true });
   await fs.writeFile(path.join(root, "dist-operator/index.html"), "ok", "utf8");
+  await fs.writeFile(path.join(root, "dist-operator/runtime/index.html"), "runtime", "utf8");
   await fs.writeFile(
     path.join(root, "scripts-build-site-stub.mjs"),
     "import { mkdirSync, writeFileSync } from 'node:fs'; mkdirSync('dist-operator', { recursive: true }); writeFileSync('dist-operator/index.html', 'rebuilt');\n",
@@ -147,5 +149,28 @@ describe("operator server", () => {
 
     expect(response.status).toBe(403);
     expect(await response.text()).toBe("forbidden");
+  });
+
+  it("serves directory routes without requiring a trailing slash", async () => {
+    const root = await makeRoot();
+    const port = 8202;
+    server = spawn(process.execPath, [tsxCli, serverScript], {
+      cwd: root,
+      env: {
+        ...process.env,
+        AI_WORKFLOW_HOST: "127.0.0.1",
+        AI_WORKFLOW_PORT: String(port),
+        AI_WORKFLOW_DIST: "dist-operator"
+      }
+    });
+    await waitForServer(port);
+
+    const noSlash = await fetch(`http://127.0.0.1:${port}/runtime`);
+    const slash = await fetch(`http://127.0.0.1:${port}/runtime/`);
+
+    expect(noSlash.status).toBe(200);
+    expect(await noSlash.text()).toBe("runtime");
+    expect(slash.status).toBe(200);
+    expect(await slash.text()).toBe("runtime");
   });
 });
