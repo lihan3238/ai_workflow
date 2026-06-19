@@ -91,6 +91,12 @@ npm run build:registry
 npm run runtime:baseline
 ```
 
+Only `runtime/baseline/assets.json` is Git-tracked. Real device registry and
+snapshot files under `runtime/devices/` are local runtime state and stay ignored
+because they contain host identities, IPs, usernames, paths, and tool snapshots.
+Restore them from encrypted local backup or recreate them with the commands
+below.
+
 Create a device snapshot through passwordless SSH:
 
 ```bash

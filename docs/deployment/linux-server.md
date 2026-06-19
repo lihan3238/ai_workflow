@@ -108,8 +108,9 @@ committed from a programmer machine or CI-reviewed branch before deployment.
 
 The Runtime page reads:
 
-- `runtime/baseline/assets.json`
-- `runtime/devices/*.json`
+- tracked Git/repo baseline: `runtime/baseline/assets.json`
+- host-local runtime state: `runtime/devices/config.json` and
+  `runtime/devices/*.json`
 
 Refresh the baseline from the latest checkout:
 
@@ -123,8 +124,8 @@ npm run check:operator-artifact
 rsync -a --delete dist-operator/ /srv/ai-workflow-home/site/
 ```
 
-Create device snapshots on each programmer machine, then commit or transfer the
-JSON back into `runtime/devices/`:
+Create device snapshots from the deployment server or transfer trusted local
+snapshots into `runtime/devices/` on that server:
 
 ```bash
 npm run runtime:inspect -- --device my-host --label "My Host" --ip 10.81.2.18 --out runtime/devices/my-host.json
@@ -132,6 +133,11 @@ npm run runtime:device:add -- --id my-host --label "My Host" --ssh user@10.81.2.
 npm run runtime:scan -- --watch --interval-seconds 180
 npm run runtime:diff -- --device runtime/devices/my-host.json
 ```
+
+Do not commit real device snapshots or `runtime/devices/config.json`. They are
+ignored by Git because they contain real hosts, IPs, usernames, paths, last-seen
+timestamps, and tool snapshots. Back them up through the host's normal encrypted
+backup or a trusted NAS/local sync path.
 
 Runtime sync is CLI-only:
 

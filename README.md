@@ -117,6 +117,11 @@ The static operator build is read-only. `npm run operator:serve` starts a thin
 LAN-local API that lets the browser add/delete hosts by editing
 `runtime/devices/config.json`; keep access control at the firewall/reverse-proxy
 layer.
+`runtime/devices/config.json` and `runtime/devices/*.json` are local runtime
+state and are ignored by Git because they contain real hostnames, IPs, usernames,
+paths, last-seen timestamps, and tool snapshots. Keep them on the deployment
+host or move them through trusted local backup/sync channels. The tracked
+baseline remains `runtime/baseline/assets.json`.
 
 Device snapshots are SSH-first. They record `user@ip`, operating system,
 last-seen time, `AGENTS.md` / `CLAUDE.md` verification, managed asset drift,
@@ -156,7 +161,7 @@ under `ai/cards/legacy/` for migration history.
 |   |-- deployment/         # Linux server and NAS migration runbooks
 |   |-- runtime/            # Restore and machine onboarding docs
 |   `-- superpowers/        # Spec and implementation plan history
-|-- runtime/                 # Device inventories and GitHub/repo asset baseline
+|-- runtime/                 # GitHub/repo asset baseline and ignored local device snapshots
 |-- scripts/                # Validation, registry, and runtime installer scripts
 |-- src/                    # Astro and TypeScript source
 |-- tests/                  # Vitest coverage for asset/runtime behavior

@@ -163,17 +163,20 @@ protected private access layer.
 
 ## Phase 4: Runtime Snapshot Storage
 
-Device snapshots can be collected through Git, rsync, or a NAS share. Keep the
-source of truth simple:
+Device snapshots can be collected locally or moved through rsync, scp, or a NAS
+share. Keep the source of truth simple:
 
 - GitHub/repo checkout owns the baseline.
-- Device JSON files describe observed device state.
+- Device JSON files describe observed device state and stay host-local.
 - CLI diff/sync applies baseline-to-device changes.
 - Local-to-GitHub changes stay Git/PR-based.
 
 Do not introduce a continuous two-way sync tool for AI assets unless it still
 preserves diff-before-apply semantics. Syncthing-style continuous sync is useful
 for files, but it is the wrong default for canonical AI asset changes.
+If the NAS becomes the application host, move `runtime/devices/config.json` and
+`runtime/devices/*.json` through trusted local backup, rsync, or a NAS share.
+Do not commit the real device inventory to Git.
 
 ## DNS And Access
 

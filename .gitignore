@@ -10,3 +10,7 @@ coverage/
 
 .playwright-mcp/
 ai-workflow-home-*.png
+
+# Local runtime state: real hosts, IPs, usernames, paths, and scan snapshots.
+/runtime/devices/*.json
+!/runtime/devices/.gitkeep

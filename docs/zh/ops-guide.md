@@ -138,6 +138,11 @@ npm run runtime:baseline
 runtime/baseline/assets.json
 ```
 
+`runtime/baseline/assets.json` 是可提交的仓库基准。`runtime/devices/config.json`
+和 `runtime/devices/*.json` 是本机运行态：里面有真实主机、IP、用户名、路径、
+上次在线时间和工具快照，默认被 Git 忽略。迁移展示服务器时，用受信任的本地备份、
+NAS 目录或 rsync/scp 转移这些文件，不把家庭/团队主机清单提交到远程仓库。
+
 ### 采集某台设备快照
 
 推荐从展示服务器通过免密 SSH 采集：
