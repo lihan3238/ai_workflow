@@ -1,23 +1,6 @@
----
-name: lihan-cards-legacy
-description: "Consults Lihan's captured experience before non-trivial work and captures verified, generalizable lessons as cards (\"consult cards\", \"查一下经验\", \"先看看有没有踩过这个坑\", \"总结成 card\", \"capture this as a card\"). Routes engineering work to the Spec Kit + bridge workflow, research work to the science workflow (papers, experiments, GPU servers, notes, manuscripts), and debugging diagnosis to prior engineering notes. Local-first: per-repo mode lock, smallest reference bundle, verify before applying. Also fires at a task-completion checkpoint per references/proactive.md. Imported as a non-default AI Workflow Home migration snapshot."
-metadata:
-  id: lihan-cards-legacy
-  kind: skill
-  domain: coding
-  visibility: team
-  status: valid
-  title: Legacy lihan-cards skill snapshot
-  summary_zh: 旧博客 lihan-cards 技能迁移快照
-  tags: skills,lihan-cards,legacy-skill
-  context_cost: medium
-  routes: codex,claude-code
-  verify_command: npm run validate && npm run check:registry
-  verify_expected: Legacy skill snapshot validates as an AI Workflow Home skill asset.
-  verify_failure_next: Fix transformed metadata before using the snapshot for migration tests.
----
+# Legacy lihan-cards skill source snapshot
 
-> Migration snapshot from `skills/lihan-cards/SKILL.md`. The active runtime remains `workflow-home`; this skill is imported for compatibility testing and reference.
+> Migration snapshot from `skills/lihan-cards/SKILL.md`. The active runtime skill is `ai/skills/workflow-home/SKILL.md`; this file is reference material only and is intentionally outside `ai/skills`.
 
 # lihan-cards
 

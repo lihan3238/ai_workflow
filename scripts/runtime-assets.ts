@@ -21,6 +21,7 @@ import {
   type RuntimeDeviceSnapshot,
   type RuntimeOsSnapshot,
   type RuntimeProjectSnapshot,
+  type SkillSnapshot,
   type RuntimeToolsSnapshot,
   unifiedDiffForAsset
 } from "../src/lib/runtime/inventory";
@@ -33,6 +34,10 @@ const MANAGED_GLOBS = [
   "ai/skills",
   "runtime/adapters"
 ];
+const WORKFLOW_HOME_SKILL_PATHS = [
+  { tool: "codex", name: "workflow-home", path: "~/.codex/skills/workflow-home/SKILL.md" },
+  { tool: "claude", name: "workflow-home", path: "~/.claude/skills/workflow-home/SKILL.md" }
+] as const;
 
 function sha256(content: string): string {
   return createHash("sha256").update(content).digest("hex");
@@ -246,6 +251,54 @@ async function remoteAgentGuides(
     agents_md: await readRemoteGuide(config, "~/.codex/AGENTS.md"),
     claude_md: await readRemoteGuide(config, "~/.claude/CLAUDE.md")
   };
+}
+
+function unknownWorkflowHomeSkills(): SkillSnapshot[] {
+  return WORKFLOW_HOME_SKILL_PATHS.map((skill) => ({
+    tool: skill.tool,
+    name: skill.name,
+    status: "unknown"
+  }));
+}
+
+async function localWorkflowHomeSkills(networkOnly: boolean): Promise<SkillSnapshot[]> {
+  if (networkOnly) return unknownWorkflowHomeSkills();
+  const snapshots: SkillSnapshot[] = [];
+  for (const skill of WORKFLOW_HOME_SKILL_PATHS) {
+    snapshots.push({
+      tool: skill.tool,
+      name: skill.name,
+      status: (await pathExists(homePath(skill.path))) ? "present" : "missing"
+    });
+  }
+  return snapshots;
+}
+
+async function remoteSkillStatus(config: RuntimeDeviceConfig, skillPath: string): Promise<SkillSnapshot["status"]> {
+  const script = [
+    'printf "__AWF_SKILL_STATUS__\\n"',
+    `p=${remotePathExpression(skillPath)}`,
+    'if [ -e "$p" ]; then printf "present\\n"; else printf "missing\\n"; fi'
+  ].join("\n");
+  try {
+    const stdout = await runSsh(config, script);
+    const status = stdout.split("__AWF_SKILL_STATUS__\n").at(-1)?.trim();
+    return status === "present" || status === "missing" ? status : "unknown";
+  } catch {
+    return "unknown";
+  }
+}
+
+async function remoteWorkflowHomeSkills(config: RuntimeDeviceConfig): Promise<SkillSnapshot[]> {
+  const snapshots: SkillSnapshot[] = [];
+  for (const skill of WORKFLOW_HOME_SKILL_PATHS) {
+    snapshots.push({
+      tool: skill.tool,
+      name: skill.name,
+      status: await remoteSkillStatus(config, skill.path)
+    });
+  }
+  return snapshots;
 }
 
 function parseOsRelease(content: string): Record<string, string> {
@@ -570,16 +623,14 @@ async function snapshotFromSshConfig(
         agents: guides.agents_md,
         claude: guides.claude_md
       }),
-      skills: [
-        { tool: "codex", name: "workflow-home", status: "unknown" },
-        { tool: "claude", name: "workflow-home", status: "unknown" }
-      ],
+      skills: unknownWorkflowHomeSkills(),
       projects: [],
       assets: []
     };
   }
 
   const guides = await remoteAgentGuides(config);
+  const skills = await remoteWorkflowHomeSkills(config);
   const os = await remoteOs(config);
   const tools = await remoteRuntimeTools(config);
   const assetCollection = config.remote_root
@@ -610,10 +661,7 @@ async function snapshotFromSshConfig(
       agents: guides.agents_md,
       claude: guides.claude_md
     }),
-    skills: [
-      { tool: "codex", name: "workflow-home", status: "unknown" },
-      { tool: "claude", name: "workflow-home", status: "unknown" }
-    ],
+    skills,
     projects,
     assets
   };
@@ -660,6 +708,7 @@ async function inspectCommand(root: string): Promise<void> {
   const user = process.env.USER || process.env.USERNAME || undefined;
   const os = networkOnly ? undefined : await localOs();
   const tools = networkOnly ? runtimeToolFallbacks() : await localRuntimeTools();
+  const skills = await localWorkflowHomeSkills(networkOnly);
   const device: RuntimeDeviceSnapshot = {
     id,
     label,
@@ -678,10 +727,7 @@ async function inspectCommand(root: string): Promise<void> {
       agents: agentGuides.agents_md,
       claude: agentGuides.claude_md
     }),
-    skills: [
-      { tool: "codex", name: "workflow-home", status: networkOnly ? "unknown" : "present" },
-      { tool: "claude", name: "workflow-home", status: networkOnly ? "unknown" : "present" }
-    ],
+    skills,
     projects: networkOnly ? [] : await localWorkflowProjects(root),
     assets: networkOnly ? [] : await collectManagedAssets(root)
   };

@@ -4,7 +4,7 @@ import process from "node:process";
 import {
   legacyCardToAssetMarkdown,
   legacyPostToAstroMarkdown,
-  legacySkillToSkillMarkdown,
+  legacySkillToArchiveMarkdown,
   outputSlugFromLegacyPost
 } from "../src/lib/legacy/import";
 
@@ -116,8 +116,8 @@ async function main(): Promise<void> {
 
   const skillText = await readSource(sourceRoot, LEGACY_SKILL);
   await writeFile(
-    path.join(repoRoot, "ai", "skills", "lihan-cards-legacy", "SKILL.md"),
-    legacySkillToSkillMarkdown({ sourceRelativePath: LEGACY_SKILL, text: skillText }),
+    path.join(repoRoot, "docs", "legacy", "lihan-cards-skill", "SKILL.md"),
+    legacySkillToArchiveMarkdown({ sourceRelativePath: LEGACY_SKILL, text: skillText }),
     apply
   );
 
@@ -126,9 +126,9 @@ async function main(): Promise<void> {
     await writeFile(
       path.join(
         repoRoot,
-        "ai",
-        "skills",
-        "lihan-cards-legacy",
+        "docs",
+        "legacy",
+        "lihan-cards-skill",
         "references",
         path.basename(relativePath)
       ),

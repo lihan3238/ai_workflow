@@ -143,7 +143,7 @@ describe("runtime inventory", () => {
 
   it("labels network-only device snapshots instead of treating them as complete inventory", () => {
     expect(runtimeDeviceInventoryLine({ inventory_status: "network-only" })).toBe("只完成网络探测，尚未采集远端资产清单");
-    expect(runtimeDeviceInventoryLine({ inventory_status: "guide-only" })).toBe("已采集用户指南，尚未采集项目资产清单");
+    expect(runtimeDeviceInventoryLine({ inventory_status: "guide-only" })).toBe("SSH 已连通，尚未采集项目资产清单");
     expect(runtimeDeviceInventoryLine({ inventory_status: "complete" })).toBe("已采集资产清单");
   });
 

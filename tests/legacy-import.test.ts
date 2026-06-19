@@ -4,7 +4,7 @@ import { parseFrontmatter } from "../src/lib/assets/registry";
 import {
   legacyCardToAssetMarkdown,
   legacyPostToAstroMarkdown,
-  legacySkillToSkillMarkdown,
+  legacySkillToArchiveMarkdown,
   outputSlugFromLegacyPost
 } from "../src/lib/legacy/import";
 
@@ -130,22 +130,14 @@ describe("legacy import transforms", () => {
     });
   });
 
-  it("wraps the legacy lihan-cards skill as a non-default skill asset", () => {
-    const markdown = legacySkillToSkillMarkdown({
+  it("archives the legacy lihan-cards skill outside the installable skill registry", () => {
+    const markdown = legacySkillToArchiveMarkdown({
       sourceRelativePath: "skills/lihan-cards/SKILL.md",
       text: legacySkill
     });
-    const asset = normalizeAsset(parseFrontmatter(markdown), "ai/skills/lihan-cards-legacy/SKILL.md");
 
-    expect(asset).toMatchObject({
-      id: "lihan-cards-legacy",
-      kind: "skill",
-      domain: "coding",
-      visibility: "team",
-      title: "Legacy lihan-cards skill snapshot",
-      tags: ["skills", "lihan-cards", "legacy-skill"]
-    });
-    expect(markdown).toContain("name: lihan-cards-legacy");
+    expect(() => parseFrontmatter(markdown)).toThrow(/missing YAML frontmatter/);
+    expect(markdown).toContain("active runtime skill is `ai/skills/workflow-home/SKILL.md`");
     expect(markdown).toContain("Single entry skill.");
   });
 });

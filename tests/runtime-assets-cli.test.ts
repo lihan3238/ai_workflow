@@ -221,6 +221,52 @@ describe("runtime asset CLI", () => {
     });
   });
 
+  it("reads remote workflow-home skill installation status over SSH", async () => {
+    const root = await makeRuntimeRoot();
+    const bin = path.join(root, "bin");
+    await fs.mkdir(bin, { recursive: true });
+    const fakeSsh = path.join(bin, "ssh");
+    await fs.writeFile(
+      fakeSsh,
+      [
+        "#!/usr/bin/env bash",
+        "script=\"${@: -1}\"",
+        "if [[ \"$script\" == \"true\" || \"$script\" == \"'true'\" ]]; then exit 0; fi",
+        "if [[ \"$script\" == *\"__AWF_SKILL_STATUS__\"* && \"$script\" == *\".codex/skills/workflow-home/SKILL.md\"* ]]; then printf \"__AWF_SKILL_STATUS__\\npresent\\n\"; exit 0; fi",
+        "if [[ \"$script\" == *\"__AWF_SKILL_STATUS__\"* && \"$script\" == *\".claude/skills/workflow-home/SKILL.md\"* ]]; then printf \"__AWF_SKILL_STATUS__\\nmissing\\n\"; exit 0; fi",
+        "if [[ \"$script\" == *\"__AWF_ROOT_MISSING__\"* ]]; then printf \"__AWF_ROOT_MISSING__\\n\"; exit 0; fi",
+        "if [[ \"$script\" == *\"__AWF_PRESENT__\"* ]]; then printf \"__AWF_MISSING__\\n\"; exit 0; fi",
+        "exit 0"
+      ].join("\n"),
+      "utf8"
+    );
+    await fs.chmod(fakeSsh, 0o755);
+
+    await execRuntime(
+      root,
+      [
+        "inspect",
+        "--device",
+        "rocky",
+        "--label",
+        "Rocky",
+        "--ssh",
+        "rocky@10.81.2.18:22",
+        "--out",
+        "runtime/devices/rocky.json"
+      ],
+      { PATH: `${bin}:${process.env.PATH}` }
+    );
+
+    const snapshot = JSON.parse(
+      await fs.readFile(path.join(root, "runtime/devices/rocky.json"), "utf8")
+    );
+    expect(snapshot.skills).toEqual([
+      { tool: "codex", name: "workflow-home", status: "present" },
+      { tool: "claude", name: "workflow-home", status: "missing" }
+    ]);
+  });
+
   it("records SSH username and operating system metadata in device snapshots", async () => {
     const root = await makeRuntimeRoot();
     const bin = path.join(root, "bin");

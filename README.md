@@ -133,10 +133,12 @@ it does not opt in a project by itself. The scanner checks the configured
 
 The full legacy `lihan_cards` card set from `lihan3238.github.io` is copied and
 schema-converted under `ai/cards/imported-lihan-cards/`. The old
-`skills/lihan-cards` directory is preserved under `ai/skills/lihan-cards-legacy/`,
-and old user-level non-secret config snapshots are preserved as private
-profiles under `ai/profiles/imported-lihan-cards/`. Existing legacy snapshots
-remain under `ai/cards/legacy/` for migration history.
+`skills/lihan-cards` directory is preserved under `docs/legacy/lihan-cards-skill/`
+as a reference snapshot only, not as an installable skill asset. The only
+installable entry skill in this repository is `ai/skills/workflow-home/SKILL.md`.
+Old user-level non-secret config snapshots are preserved as private profiles
+under `ai/profiles/imported-lihan-cards/`. Existing legacy snapshots remain
+under `ai/cards/legacy/` for migration history.
 
 ## Directory Structure
 

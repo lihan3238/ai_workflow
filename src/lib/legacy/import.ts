@@ -203,28 +203,12 @@ export function legacyCardToAssetMarkdown(input: LegacyInput): string {
   return `${yamlBlock(nextFrontmatter)}${body.trimEnd()}\n`;
 }
 
-export function legacySkillToSkillMarkdown(input: LegacyInput): string {
-  const { frontmatter, body } = parseMarkdown(input.text);
-  const description = requireString(frontmatter, "description");
-  const nextFrontmatter = {
-    name: "lihan-cards-legacy",
-    description: `${description} Imported as a non-default AI Workflow Home migration snapshot.`,
-    metadata: {
-      id: "lihan-cards-legacy",
-      kind: "skill",
-      domain: "coding",
-      visibility: "team",
-      status: "valid",
-      title: "Legacy lihan-cards skill snapshot",
-      summary_zh: "旧博客 lihan-cards 技能迁移快照",
-      tags: "skills,lihan-cards,legacy-skill",
-      context_cost: "medium",
-      routes: "codex,claude-code",
-      verify_command: "npm run validate && npm run check:registry",
-      verify_expected: "Legacy skill snapshot validates as an AI Workflow Home skill asset.",
-      verify_failure_next: "Fix transformed metadata before using the snapshot for migration tests."
-    }
-  };
+export function legacySkillToArchiveMarkdown(input: LegacyInput): string {
+  const { body } = parseMarkdown(input.text);
+  return `# Legacy lihan-cards skill source snapshot
 
-  return `${yamlBlock(nextFrontmatter)}> Migration snapshot from \`${input.sourceRelativePath}\`. The active runtime remains \`workflow-home\`; this skill is imported for compatibility testing and reference.\n\n${body.trimEnd()}\n`;
+> Migration snapshot from \`${input.sourceRelativePath}\`. The active runtime skill is \`ai/skills/workflow-home/SKILL.md\`; this file is reference material only and is intentionally outside \`ai/skills\`.
+
+${body.trimEnd()}
+`;
 }

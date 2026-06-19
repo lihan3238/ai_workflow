@@ -250,7 +250,7 @@ export function runtimeDeviceInventoryLine(
     return "只完成网络探测，尚未采集远端资产清单";
   }
   if (device.inventory_status === "guide-only") {
-    return "已采集用户指南，尚未采集项目资产清单";
+    return "SSH 已连通，尚未采集项目资产清单";
   }
   return "已采集资产清单";
 }
