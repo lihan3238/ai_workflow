@@ -1,6 +1,7 @@
 ---
 import { getCollection, render } from "astro:content";
 import BaseLayout from "../../layouts/BaseLayout.astro";
+import { estimateReadingMetrics, formatPostDate } from "../../lib/blog/post-metadata";
 
 export async function getStaticPaths() {
   const posts = await getCollection("posts", ({ data }) => data.visibility === "public");
@@ -8,29 +9,66 @@ export async function getStaticPaths() {
 }
 
 const { post } = Astro.props;
-const { Content } = await render(post);
+const { Content, headings } = await render(post);
 const posts = (await getCollection("posts", ({ data }) => data.visibility === "public")).sort(
   (a, b) => b.data.date.valueOf() - a.data.date.valueOf()
 );
 const related = posts.filter((item) => item.id !== post.id).slice(0, 2);
+const reading = estimateReadingMetrics(post.body ?? "");
+const published = formatPostDate(post.data.date);
+const tocHeadings = headings.filter((heading) => heading.depth >= 2 && heading.depth <= 3);
 ---
 
 <BaseLayout title={post.data.title} section="blog" description={post.data.description}>
-  <p class="eyebrow">Blog</p>
-  <h1 class="page-title">{post.data.title}</h1>
-  <p class="lead">{post.data.description}</p>
+  <header class="post-hero section">
+    <div class="post-hero-main">
+      <a class="post-kicker" href="/blog/">Blog</a>
+      <h1 class="page-title">{post.data.title}</h1>
+      <p class="lead">{post.data.description}</p>
+    </div>
+    <aside class="post-summary-panel" aria-label="Post summary">
+      <span>Published</span>
+      <strong><time datetime={published}>{published}</time></strong>
+      <span>Reading</span>
+      <strong>{reading.label}</strong>
+      <div class="tag-row post-summary-tags">
+        {post.data.tags.map((tag) => <span class="tag">{tag}</span>)}
+      </div>
+    </aside>
+  </header>
 
   <section class="post-detail-layout section">
-    <article class="prose">
+    <article class="prose post-article">
       <Content />
+      <footer class="post-footer">
+        <a class="button inline-button" href="/blog/">返回 Blog</a>
+      </footer>
     </article>
     <aside class="post-aside" aria-label="Post metadata">
+      {tocHeadings.length > 0 && (
+        <nav class="panel post-toc" aria-label="Table of contents">
+          <h2>Contents</h2>
+          <ol class="toc-list">
+            {tocHeadings.map((heading) => (
+              <li>
+                <a class={`toc-link depth-${heading.depth}`} href={`#${heading.slug}`}>
+                  {heading.text}
+                </a>
+              </li>
+            ))}
+          </ol>
+        </nav>
+      )}
       <div class="panel">
-        <h2>Meta</h2>
+        <h2>Article</h2>
         <dl class="meta-list">
           <div>
-            <dt>Date</dt>
-            <dd>{post.data.date.toISOString().slice(0, 10)}</dd>
+            <dt>Published</dt>
+            <dd>{published}</dd>
+          </div>
+          <div>
+            <dt>Reading</dt>
+            <dd>{reading.label}</dd>
           </div>
           <div>
             <dt>Tags</dt>
@@ -42,15 +80,17 @@ const related = posts.filter((item) => item.id !== post.id).slice(0, 2);
           </div>
         </dl>
       </div>
-      <div class="panel compact-posts">
-        <h2>More</h2>
-        {related.map((item) => (
-          <a href={`/blog/${item.id}/`}>
-            <time>{item.data.date.toISOString().slice(0, 10)}</time>
-            <span>{item.data.title}</span>
-          </a>
-        ))}
-      </div>
+      {related.length > 0 && (
+        <div class="panel compact-posts" aria-label="Related posts">
+          <h2>More</h2>
+          {related.map((item) => (
+            <a href={`/blog/${item.id}/`}>
+              <time>{formatPostDate(item.data.date)}</time>
+              <span>{item.data.title}</span>
+            </a>
+          ))}
+        </div>
+      )}
     </aside>
   </section>
 </BaseLayout>

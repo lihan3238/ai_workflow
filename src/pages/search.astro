@@ -1,8 +1,12 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
-import { isOperatorMode, parseSiteMode } from "../lib/site-mode";
+import { getCollection } from "astro:content";
+import registry from "../../ai/registry/assets.json";
+import { assetsVisibleInSiteMode, isOperatorMode, parseSiteMode } from "../lib/site-mode";
 
 const siteMode = parseSiteMode(import.meta.env.PUBLIC_SITE_MODE);
+const posts = await getCollection("posts", ({ data }) => data.visibility === "public");
+const assets = assetsVisibleInSiteMode(siteMode, registry.assets);
 ---
 
 <BaseLayout title="Search" section="search">
@@ -13,7 +17,7 @@ const siteMode = parseSiteMode(import.meta.env.PUBLIC_SITE_MODE);
     静态索引在构建时生成，浏览器端只做本地 fuzzy search，不触发远程查询。
   </p>
 
-  <section class="section">
+  <section class="search-workbench section">
     <div class="search-panel">
       <label class="search-label" for="site-search">Search query</label>
       <input
@@ -27,6 +31,18 @@ const siteMode = parseSiteMode(import.meta.env.PUBLIC_SITE_MODE);
       <div class="search-status" data-search-status>正在加载索引...</div>
       <div class="search-results" data-search-results></div>
     </div>
+    <aside class="search-rail" aria-label="Search index summary">
+      <div class="panel blog-stat">
+        <span>Blog posts</span>
+        <strong>{posts.length}</strong>
+        <small>Public index</small>
+      </div>
+      <div class="panel blog-stat">
+        <span>AI assets</span>
+        <strong>{assets.length}</strong>
+        <small>Operator-visible</small>
+      </div>
+    </aside>
   </section>
 </BaseLayout>
 

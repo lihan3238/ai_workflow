@@ -120,6 +120,31 @@ layer.
 Runtime browser helpers only improve operator UX for form parsing,
 confirmation dialogs, and static-site fallback commands. The CLI/API remains
 authoritative for validation and writes.
+
+WSL mirrored networking can reserve interface ports that Windows browsers still
+cannot reach directly. For a Windows browser on this host, bind the WSL server
+to loopback:
+
+```bash
+AI_WORKFLOW_HOST=127.0.0.1 AI_WORKFLOW_PORT=3000 npm run operator:serve
+```
+
+Windows should then reach `http://127.0.0.1:3000/`. If an interface URL such as
+`http://10.22.0.11:3000/` is needed, run WSL on a different target port and let
+Windows own the public port through `netsh portproxy`:
+
+```bash
+AI_WORKFLOW_HOST=127.0.0.1 AI_WORKFLOW_PORT=3001 npm run operator:serve
+```
+
+```powershell
+netsh interface portproxy add v4tov4 `
+  listenaddress=10.22.0.11 listenport=3000 `
+  connectaddress=127.0.0.1 connectport=3001
+
+netsh interface portproxy show v4tov4
+```
+
 `runtime/devices/config.json` and `runtime/devices/*.json` are local runtime
 state and are ignored by Git because they contain real hostnames, IPs, usernames,
 paths, last-seen timestamps, and tool snapshots. Keep them on the deployment

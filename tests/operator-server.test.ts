@@ -1,14 +1,33 @@
 import { spawn, type ChildProcessWithoutNullStreams } from "node:child_process";
 import { promises as fs } from "node:fs";
+import { createServer } from "node:net";
 import os from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
+import type { AddressInfo } from "node:net";
 
 const repoRoot = process.cwd();
 const tsxCli = path.join(repoRoot, "node_modules/tsx/dist/cli.mjs");
 const serverScript = path.join(repoRoot, "scripts/operator-server.ts");
 const tempRoots: string[] = [];
 let server: ChildProcessWithoutNullStreams | undefined;
+
+async function freePort(): Promise<number> {
+  return await new Promise((resolve, reject) => {
+    const socket = createServer();
+    socket.once("error", reject);
+    socket.listen(0, "127.0.0.1", () => {
+      const address = socket.address() as AddressInfo;
+      socket.close((error) => {
+        if (error) {
+          reject(error);
+          return;
+        }
+        resolve(address.port);
+      });
+    });
+  });
+}
 
 async function makeRoot(): Promise<string> {
   const root = await fs.mkdtemp(path.join(os.tmpdir(), "ai-workflow-operator-"));
@@ -49,7 +68,7 @@ afterEach(async () => {
 describe("operator server", () => {
   it("adds and deletes runtime hosts through the local API", async () => {
     const root = await makeRoot();
-    const port = 8199;
+    const port = await freePort();
     server = spawn(process.execPath, [tsxCli, serverScript], {
       cwd: root,
       env: {
@@ -94,7 +113,7 @@ describe("operator server", () => {
 
   it("rejects unsafe device ids before writing config or snapshots", async () => {
     const root = await makeRoot();
-    const port = 8200;
+    const port = await freePort();
     server = spawn(process.execPath, [tsxCli, serverScript], {
       cwd: root,
       env: {
@@ -129,7 +148,7 @@ describe("operator server", () => {
 
   it("blocks encoded path traversal outside the operator artifact directory", async () => {
     const root = await makeRoot();
-    const port = 8201;
+    const port = await freePort();
     await fs.mkdir(path.join(root, "dist-operator-sibling"), { recursive: true });
     await fs.writeFile(path.join(root, "dist-operator-sibling/secret.txt"), "secret", "utf8");
     server = spawn(process.execPath, [tsxCli, serverScript], {
@@ -153,7 +172,7 @@ describe("operator server", () => {
 
   it("serves directory routes without requiring a trailing slash", async () => {
     const root = await makeRoot();
-    const port = 8202;
+    const port = await freePort();
     server = spawn(process.execPath, [tsxCli, serverScript], {
       cwd: root,
       env: {
